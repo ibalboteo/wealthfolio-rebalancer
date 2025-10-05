@@ -1,0 +1,47 @@
+{
+  "name": "wealthfolio-rebalancer-addon",
+  "version": "1.0.0",
+  "description": "Rebalancer calculates the exact trades you need to keep your portfolio on target, on demand.",
+  "type": "module",
+  "main": "dist/addon.js",
+  "keywords": [
+    "wealthfolio",
+    "addon"
+  ],
+  "license": "MIT",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "dev:server": "wealthfolio dev",
+    "clean": "rm -rf dist",
+    "package": "mkdir -p dist && zip -r dist/$npm_package_name-$npm_package_version.zip manifest.json dist/ assets/ README.md",
+    "bundle": "pnpm clean && pnpm build && pnpm package",
+    "lint": "tsc --noEmit",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@radix-ui/react-avatar": "^1.1.10",
+    "@tanstack/react-query": "^5.87.4",
+    "@wealthfolio/addon-sdk": "^1.0.0",
+    "@wealthfolio/ui": "^1.0.0",
+    "framer-motion": "^12.6.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^7.5.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@types/react": "^18.3.11",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.4.1",
+    "@wealthfolio/addon-dev-tools": "^1.0.0",
+    "rollup-plugin-external-globals": "^0.13.0",
+    "typescript": "^5.8.3",
+    "vite": "^6.2.7"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
+}
