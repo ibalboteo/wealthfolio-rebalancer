@@ -1,0 +1,24 @@
+pre-commit:
+  parallel: true
+  commands:
+    biome:
+      glob: "*.{js,ts,jsx,tsx,json}"
+      run: pnpm check
+      stage_fixed: true
+      fail_text: |
+        Biome found issues in your code.
+        Run 'pnpm check:fix' to automatically fix some issues.
+    type-check:
+      glob: "*.{ts,tsx}"
+      run: pnpm type-check
+      fail_text: |
+        TypeScript found type errors.
+        Please fix the type errors before committing.
+
+# Skip lefthook execution for merge commits
+output:
+  - meta
+  - summary
+
+# Minimum lefthook version required
+min_version: 2.0.0

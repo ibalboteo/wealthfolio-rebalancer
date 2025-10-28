@@ -1,2 +1,2 @@
-export { useHoldings } from "./use-holdings";
-export { useAccounts } from "./use-accounts";
+export * from './use-accounts';
+export * from './use-holdings';
