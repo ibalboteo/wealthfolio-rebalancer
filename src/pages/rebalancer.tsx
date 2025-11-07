@@ -19,7 +19,7 @@ import {
   TickerAvatar,
   TransferCard,
 } from '../components';
-import type { PlannedHolding } from '../hooks/use-holdings';
+import { type PlannedHolding, useHoldings } from '../hooks/use-holdings';
 import { type RebalancePlan, useConfigure, useRebalance } from '../hooks/use-rebalance';
 import { addonName, useSelectedAccount } from '../lib';
 
@@ -127,6 +127,15 @@ export function Rebalancer({ ctx }: { ctx: AddonContext }) {
   const rebalancePlan = useRebalance({ ctx });
   const configurationRequired = useConfigure();
 
+  // Get holdings to check if account has any transactions
+  const { data: holdings } = useHoldings({
+    accountId: selectedAccount?.id || '',
+    ctx,
+    enabled: !!selectedAccount?.id,
+  });
+
+  const hasHoldings = holdings && holdings.length > 0;
+
   return (
     <div className="p-6 flex flex-col h-full">
       <div className="flex flex-col h-full w-full space-y-6">
@@ -145,7 +154,26 @@ export function Rebalancer({ ctx }: { ctx: AddonContext }) {
           </div>
         )}
 
+        {selectedAccount && !hasHoldings && (
+          <div className="flex flex-col items-center justify-center h-full gap-6">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <p className="text-lg font-light">No transactions found in this account.</p>
+            </div>
+            <Button
+              onClick={() => {
+                // Navigate to activities page in Wealthfolio
+                ctx.api.navigation.navigate('/activities');
+              }}
+              className="flex items-center gap-2"
+            >
+              <Icons.Plus className="h-4 w-4" />
+              Add Transactions
+            </Button>
+          </div>
+        )}
+
         {selectedAccount &&
+          hasHoldings &&
           (configurationRequired ? (
             <div className="flex flex-col items-center justify-center h-full gap-6">
               <div className="flex items-center gap-2 text-muted-foreground">
