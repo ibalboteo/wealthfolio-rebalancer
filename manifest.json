@@ -1,7 +1,7 @@
 {
   "id": "rebalancer",
   "name": "rebalancer",
-  "version": "1.0.0",
+  "version": "0.1.2",
   "description": "Rebalancer calculates the exact trades you need to keep your portfolio on target, on demand.",
   "author": "Ivan Balboteo",
   "main": "dist/addon.js",
@@ -10,10 +10,15 @@
   "permissions": [
     {
       "category": "ui",
-      "functions": ["sidebar.addItem"],
+      "functions": [
+        "sidebar.addItem"
+      ],
       "purpose": "Add navigation items to the sidebar"
     }
   ],
-  "keywords": ["wealthfolio", "addon"],
+  "keywords": [
+    "wealthfolio",
+    "addon"
+  ],
   "license": "MIT"
 }

@@ -86,7 +86,7 @@ export function calculateRebalanceActions(
   if (!holdings) return [];
 
   // Only consider enabled holdings for rebalancing
-  const enabledHoldings = holdings.filter((h) => h.plan.enabled);
+  const enabledHoldings = holdings.filter((h) => h.plan?.enabled === true);
   if (enabledHoldings.length === 0) return [];
 
   const total = enabledHoldings.reduce((s, h) => s + h.marketValue.base, 0);

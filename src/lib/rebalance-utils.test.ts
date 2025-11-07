@@ -1,7 +1,12 @@
-import { HoldingType } from '@wealthfolio/addon-sdk';
 import { describe, expect, it } from 'vitest';
 import type { PlannedHolding } from '../hooks/use-holdings';
 import { calculateRebalanceActions, simulateRebalance } from './rebalance-utils';
+
+// Mock HoldingType enum for testing since the SDK may not be available in test environment
+const HoldingType = {
+  SECURITY: 'security',
+  CASH: 'cash',
+} as const;
 
 describe('Rebalance', () => {
   const testCases = [

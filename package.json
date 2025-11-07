@@ -1,6 +1,6 @@
 {
   "name": "wealthfolio-rebalancer-addon",
-  "version": "1.0.0",
+  "version": "0.1.2",
   "description": "Rebalancer calculates the exact trades you need to keep your portfolio on target, on demand.",
   "type": "module",
   "main": "dist/addon.js",
@@ -25,6 +25,7 @@
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "prepare": "lefthook install",
+    "version": "node -e \"const fs=require('fs'); const pkg=require('./package.json'); const manifest=require('./manifest.json'); manifest.version=pkg.version; fs.writeFileSync('manifest.json',JSON.stringify(manifest,null,2)+'\\n');\" && git add manifest.json",
     "release": "pnpm version",
     "release:patch": "pnpm version patch && git push --follow-tags",
     "release:minor": "pnpm version minor && git push --follow-tags",
