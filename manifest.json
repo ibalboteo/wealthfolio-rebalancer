@@ -11,9 +11,31 @@
     {
       "category": "ui",
       "functions": [
-        "sidebar.addItem"
+        "sidebar.addItem",
+        "router.add"
       ],
-      "purpose": "Add navigation items to the sidebar"
+      "purpose": "Add navigation items and routes to the sidebar"
+    },
+    {
+      "category": "accounts",
+      "functions": [
+        "getAll"
+      ],
+      "purpose": "Access account information for portfolio rebalancing"
+    },
+    {
+      "category": "portfolio",
+      "functions": [
+        "getHoldings"
+      ],
+      "purpose": "Read portfolio holdings to calculate rebalancing recommendations"
+    },
+    {
+      "category": "navigation",
+      "functions": [
+        "navigate"
+      ],
+      "purpose": "Navigate to activities page for transaction management"
     }
   ],
   "keywords": [
