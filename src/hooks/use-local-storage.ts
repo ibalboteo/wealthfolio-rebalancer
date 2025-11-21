@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 /**
  * Safe wrapper para leer localStorage con manejo de errores y fallback
@@ -31,33 +31,30 @@ export function useLocalStorage<T>(key: string, defaultValue: T) {
   /**
    * Actualiza el estado y localStorage de forma segura
    */
-  const setStoredValue = useCallback(
-    (newValue: T | ((prev: T) => T)) => {
-      setValue((prev) => {
-        const valueToStore = newValue instanceof Function ? newValue(prev) : newValue;
+  const setStoredValue = (newValue: T | ((prev: T) => T)) => {
+    setValue((prev) => {
+      const valueToStore = newValue instanceof Function ? newValue(prev) : newValue;
 
-        try {
-          if (typeof window !== 'undefined') {
-            localStorage.setItem(key, JSON.stringify(valueToStore));
+      try {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(key, JSON.stringify(valueToStore));
 
-            // Dispara manualmente un evento "storage" para sincronizar
-            window.dispatchEvent(
-              new StorageEvent('storage', {
-                key,
-                newValue: JSON.stringify(valueToStore),
-                oldValue: JSON.stringify(prev),
-              })
-            );
-          }
-        } catch {
-          // Ignora errores (ej. localStorage lleno o no disponible)
+          // Dispara manualmente un evento "storage" para sincronizar
+          window.dispatchEvent(
+            new StorageEvent('storage', {
+              key,
+              newValue: JSON.stringify(valueToStore),
+              oldValue: JSON.stringify(prev),
+            })
+          );
         }
+      } catch {
+        // Ignora errores (ej. localStorage lleno o no disponible)
+      }
 
-        return valueToStore;
-      });
-    },
-    [key]
-  );
+      return valueToStore;
+    });
+  };
 
   /**
    * Sincroniza el valor si cambia en otra pestaña

@@ -1,5 +1,4 @@
 import type { AddonContext } from '@wealthfolio/addon-sdk';
-import { useMemo } from 'react';
 import type { RebalanceAction } from '../lib';
 import {
   addonName,
@@ -32,20 +31,18 @@ export function useRebalance({
     ctx,
   });
 
-  return useMemo(() => {
-    const transfers = calculateRebalanceActions(holdings, tolerance);
-    const previewHoldings = simulateRebalance(holdings, transfers);
-    const totalPreviewValue = previewHoldings.reduce(
-      (sum, h) => (h.plan?.enabled ? sum + h.marketValue.base : sum),
-      0
-    );
+  const transfers = calculateRebalanceActions(holdings, tolerance);
+  const previewHoldings = simulateRebalance(holdings, transfers);
+  const totalPreviewValue = previewHoldings.reduce(
+    (sum, h) => (h.plan?.enabled ? sum + h.marketValue.base : sum),
+    0
+  );
 
-    return {
-      transfers,
-      previewHoldings,
-      totalPreviewValue,
-    };
-  }, [holdings, tolerance]);
+  return {
+    transfers,
+    previewHoldings,
+    totalPreviewValue,
+  };
 }
 
 export function useConfigure(): boolean {

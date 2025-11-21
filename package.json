@@ -50,6 +50,7 @@
     "@vitejs/plugin-react": "^4.4.1",
     "@vitest/ui": "^3.2.4",
     "@wealthfolio/addon-dev-tools": "^1.0.0",
+    "babel-plugin-react-compiler": "^1.0.0",
     "lefthook": "^2.0.1",
     "rollup-plugin-external-globals": "^0.13.0",
     "typescript": "^5.8.3",

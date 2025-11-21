@@ -1,5 +1,5 @@
 import type { Account } from '@wealthfolio/addon-sdk';
-import type React from 'react';
+import type { ReactNode } from 'react';
 import { createContext, useContext } from 'react';
 import { useLocalStorage } from '../hooks/use-local-storage';
 
@@ -10,7 +10,7 @@ interface SelectedAccountContextProps {
 
 const SelectedAccountContext = createContext<SelectedAccountContextProps | undefined>(undefined);
 
-export function SelectedAccountProvider({ children }: { children: React.ReactNode }) {
+export function SelectedAccountProvider({ children }: { children: ReactNode }) {
   const [selectedAccount, setSelectedAccount] = useLocalStorage<Account | null>(
     'addons:rebalancer:selectedAccount',
     null
