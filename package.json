@@ -32,30 +32,30 @@
     "release:major": "pnpm version major && git push --follow-tags"
   },
   "dependencies": {
-    "@radix-ui/react-avatar": "^1.1.10",
-    "@tanstack/react-query": "^5.87.4",
+    "@radix-ui/react-avatar": "^1.1.11",
+    "@tanstack/react-query": "^5.90.10",
     "@wealthfolio/addon-sdk": "^1.0.0",
     "@wealthfolio/ui": "^1.0.0",
     "change-case": "^5.4.4",
-    "framer-motion": "^12.6.3",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-router-dom": "^7.5.2"
+    "framer-motion": "^12.23.24",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.9.6"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.2.7",
-    "@types/node": "^22.14.0",
-    "@types/react": "^18.3.11",
-    "@types/react-dom": "^18.3.0",
+    "@biomejs/biome": "^2.3.7",
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.6",
+    "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.4.1",
-    "@vitest/ui": "^3.2.4",
+    "@vitest/ui": "^4.0.13",
     "@wealthfolio/addon-dev-tools": "^1.0.0",
     "babel-plugin-react-compiler": "^1.0.0",
-    "lefthook": "^2.0.1",
+    "lefthook": "^2.0.4",
     "rollup-plugin-external-globals": "^0.13.0",
-    "typescript": "^5.8.3",
-    "vite": "^6.2.7",
-    "vitest": "^3.2.4"
+    "typescript": "^5.9.3",
+    "vite": "^7.2.4",
+    "vitest": "^4.0.13"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

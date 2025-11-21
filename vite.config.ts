@@ -4,7 +4,11 @@ import externalGlobals from 'rollup-plugin-external-globals';
 
 export default defineConfig(({ mode }) => ({
   plugins: [
-    react(),
+    react({
+      babel: {
+        plugins: mode === 'production' ? [['babel-plugin-react-compiler']] : [],
+      },
+    }),
   ],
   define: {
     'process.env.NODE_ENV': JSON.stringify(mode === 'production' ? 'production' : 'development'),
