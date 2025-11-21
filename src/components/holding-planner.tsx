@@ -1,6 +1,6 @@
 import type { AddonContext } from '@wealthfolio/addon-sdk/types';
 import { Button, cn, Input, Switch, toast } from '@wealthfolio/ui';
-import type React from 'react';
+import type { FormEvent } from 'react';
 import { useEffect, useState } from 'react';
 import { useHoldings, useUpdateHolding } from '../hooks';
 import { useSelectedAccount } from '../lib/account-provider';
@@ -44,7 +44,7 @@ export function HoldingPlanner({ ctx, onSave }: HoldingPlannerProps) {
   }, [holdings]);
 
   // Submit handler
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     // Check total percentage
     const total = formState.reduce((sum, item) => sum + item.target, 0);

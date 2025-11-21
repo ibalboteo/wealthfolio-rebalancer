@@ -1,11 +1,12 @@
 import { cn } from '@wealthfolio/ui';
+import type { ReactNode } from 'react';
 
 interface ApplicationHeaderProps {
   heading: string;
   headingPrefix?: string;
   text?: string;
   className?: string;
-  children?: React.ReactNode;
+  children?: ReactNode;
 }
 
 export function ApplicationHeader({
