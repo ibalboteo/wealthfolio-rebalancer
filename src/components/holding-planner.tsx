@@ -1,8 +1,8 @@
 import type { AddonContext } from '@wealthfolio/addon-sdk/types';
-import { Button, cn, Input, Switch, toast } from '@wealthfolio/ui';
+import { Button, cn, Input, Switch } from '@wealthfolio/ui';
 import type { FormEvent } from 'react';
 import { useEffect, useState } from 'react';
-import { useHoldings, useUpdateHolding } from '../hooks';
+import { type HoldingPlanData, useHoldings, useToast, useUpdateHolding } from '../hooks';
 import { useSelectedAccount } from '../lib/account-provider';
 import { TickerAvatar } from './ticker-avatar';
 
@@ -12,6 +12,7 @@ export interface HoldingPlannerProps {
 }
 
 export function HoldingPlanner({ ctx, onSave }: HoldingPlannerProps) {
+  const { toast } = useToast();
   const { selectedAccount } = useSelectedAccount();
   const { data: holdings } = useHoldings({
     accountId: selectedAccount?.id || '',
@@ -23,7 +24,7 @@ export function HoldingPlanner({ ctx, onSave }: HoldingPlannerProps) {
   });
 
   // Estado local para los valores del formulario
-  const [formState, setFormState] = useState(
+  const [formState, setFormState] = useState<HoldingPlanData[]>(
     () =>
       holdings?.map((h) => ({
         id: h.id,

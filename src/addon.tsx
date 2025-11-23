@@ -1,8 +1,9 @@
-import { QueryClientProvider } from '@tanstack/react-query';
+import { type QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { AddonContext } from '@wealthfolio/addon-sdk';
-import { Icons, Toaster } from '@wealthfolio/ui';
+import { Icons } from '@wealthfolio/ui';
 import { pascalCase } from 'change-case';
 import { lazy } from 'react';
+import { Toaster } from './components/toaster';
 import { addonName } from './lib';
 import { SelectedAccountProvider } from './lib/account-provider';
 import { Rebalancer } from './pages/rebalancer';
@@ -19,7 +20,7 @@ export default function enable(ctx: AddonContext) {
 
   // Create wrapper component with QueryClientProvider using shared client
   const RebalancerWrapper = () => {
-    const sharedQueryClient = ctx.api.query.getClient();
+    const sharedQueryClient = ctx.api.query.getClient() as QueryClient;
 
     return (
       <QueryClientProvider client={sharedQueryClient}>
