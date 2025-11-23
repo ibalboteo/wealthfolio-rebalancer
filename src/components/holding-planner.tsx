@@ -24,24 +24,19 @@ export function HoldingPlanner({ ctx, onSave }: HoldingPlannerProps) {
   });
 
   // Estado local para los valores del formulario
-  const [formState, setFormState] = useState<HoldingPlanData[]>(
-    () =>
-      holdings?.map((h) => ({
-        id: h.id,
-        target: h.plan.target,
-        enabled: h.plan.enabled,
-      })) || []
-  );
+  const [formState, setFormState] = useState<HoldingPlanData[]>([]);
 
   // Actualiza el estado local cuando cambian los holdings
   useEffect(() => {
-    setFormState(
-      holdings?.map((h) => ({
-        id: h.id,
-        target: h.plan.target,
-        enabled: h.plan.enabled,
-      })) || []
-    );
+    if (holdings && holdings.length > 0) {
+      setFormState(
+        holdings.map((h) => ({
+          id: h.id,
+          target: h.plan.target,
+          enabled: h.plan.enabled,
+        }))
+      );
+    }
   }, [holdings]);
 
   // Submit handler
@@ -64,6 +59,7 @@ export function HoldingPlanner({ ctx, onSave }: HoldingPlannerProps) {
           description: 'Holding plan updated successfully',
           variant: 'success',
         });
+        onSave?.();
       },
       onError: () => {
         toast({
@@ -73,8 +69,6 @@ export function HoldingPlanner({ ctx, onSave }: HoldingPlannerProps) {
         });
       },
     });
-
-    onSave?.();
   };
 
   // Handler para cambiar valores
@@ -120,7 +114,7 @@ export function HoldingPlanner({ ctx, onSave }: HoldingPlannerProps) {
               </div>
               <Input
                 type="number"
-                value={formState[idx]?.target}
+                value={formState[idx]?.target ?? 0}
                 min={0}
                 max={100}
                 step={0.01}
@@ -132,7 +126,7 @@ export function HoldingPlanner({ ctx, onSave }: HoldingPlannerProps) {
               />
             </fieldset>
             <Switch
-              checked={formState[idx]?.enabled}
+              checked={formState[idx]?.enabled ?? false}
               onCheckedChange={(checked) => handleChange(idx, 'enabled', checked)}
             />
           </div>

@@ -196,9 +196,9 @@ export function Rebalancer({ ctx }: { ctx: AddonContext }) {
               </div>
               <div className="flex-1 overflow-y-auto">
                 <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-fr">
-                  {rebalancePlan?.transfers.map(({ from, to, amount, currency }, _index) => (
+                  {rebalancePlan?.transfers.map(({ from, to, amount, currency }) => (
                     <TransferCard
-                      key={`${from}-${to}-${amount}-${currency}`}
+                      key={`${from.id}-${to.id}`}
                       from={from}
                       to={to}
                       amount={amount}
