@@ -44,14 +44,16 @@ export function EditPlanSheet({ ctx, label = 'Edit Plan' }: EditPlanSheetProps) 
           {label}
         </Button>
       </SheetTrigger>
-      <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
-        <SheetHeader>
+      <SheetContent className="w-full sm:max-w-lg flex flex-col h-full">
+        <SheetHeader className="flex-shrink-0">
           <SheetTitle>Edit Plan</SheetTitle>
           <SheetDescription>
             Adjust your target allocations to create a personalized investment plan.
           </SheetDescription>
         </SheetHeader>
-        <HoldingPlanner ctx={ctx} onSave={() => setOpen(false)} />
+        <div className="flex-1 min-h-0">
+          <HoldingPlanner ctx={ctx} onSave={() => setOpen(false)} />
+        </div>
       </SheetContent>
     </Sheet>
   );
@@ -70,14 +72,14 @@ export function PreviewSheet({ rebalancePlan }: { rebalancePlan: RebalancePlan |
           Preview
         </Button>
       </SheetTrigger>
-      <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
+      <SheetContent className="w-full sm:max-w-lg flex flex-col">
         <SheetHeader>
           <SheetTitle>Portfolio Preview</SheetTitle>
           <SheetDescription>
             This is how your portfolio would look after applying the suggested changes.
           </SheetDescription>
         </SheetHeader>
-        <div className="space-y-4 py-4">
+        <div className="flex-1 overflow-y-auto space-y-4 py-4">
           {rebalancePlan?.previewHoldings.map((h: PlannedHolding) => {
             let percent = 0;
             if (h.plan?.enabled && rebalancePlan.totalPreviewValue > 0) {
@@ -148,7 +150,7 @@ export function Rebalancer({ ctx }: { ctx: AddonContext }) {
 
         {!selectedAccount && (
           <div className="flex items-center justify-center h-full">
-            <p className="ml-4 text-lg font-light text-muted-foreground">
+            <p className="text-lg font-light text-muted-foreground text-center max-w-md">
               Please select an account to identify rebalance opportunities.
             </p>
           </div>
@@ -176,9 +178,9 @@ export function Rebalancer({ ctx }: { ctx: AddonContext }) {
           hasHoldings &&
           (configurationRequired ? (
             <div className="flex flex-col items-center justify-center h-full gap-6">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Icons.AlertCircle className="h-6 w-6" />
-                <p className="text-lg font-light">
+              <div className="flex flex-col items-center gap-3 text-center max-w-md">
+                <Icons.AlertCircle className="h-6 w-6 text-muted-foreground" />
+                <p className="text-lg font-light text-muted-foreground">
                   Please configure your plan to establish target allocations.
                 </p>
               </div>
@@ -192,17 +194,19 @@ export function Rebalancer({ ctx }: { ctx: AddonContext }) {
                 )}
                 <EditPlanSheet ctx={ctx} />
               </div>
-              <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {rebalancePlan?.transfers.map(({ from, to, amount, currency }, _index) => (
-                  <TransferCard
-                    key={`${from}-${to}-${amount}-${currency}`}
-                    from={from}
-                    to={to}
-                    amount={amount}
-                    currency={currency}
-                  />
-                ))}
-              </ul>
+              <div className="flex-1 overflow-y-auto">
+                <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-fr">
+                  {rebalancePlan?.transfers.map(({ from, to, amount, currency }) => (
+                    <TransferCard
+                      key={`${from.id}-${to.id}`}
+                      from={from}
+                      to={to}
+                      amount={amount}
+                      currency={currency}
+                    />
+                  ))}
+                </ul>
+              </div>
             </>
           ))}
       </div>

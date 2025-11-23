@@ -38,15 +38,6 @@ export function useLocalStorage<T>(key: string, defaultValue: T) {
       try {
         if (typeof window !== 'undefined') {
           localStorage.setItem(key, JSON.stringify(valueToStore));
-
-          // Dispara manualmente un evento "storage" para sincronizar
-          window.dispatchEvent(
-            new StorageEvent('storage', {
-              key,
-              newValue: JSON.stringify(valueToStore),
-              oldValue: JSON.stringify(prev),
-            })
-          );
         }
       } catch {
         // Ignora errores (ej. localStorage lleno o no disponible)

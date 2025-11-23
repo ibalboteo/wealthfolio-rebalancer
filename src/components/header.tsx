@@ -18,8 +18,11 @@ export function ApplicationHeader({
 }: ApplicationHeaderProps) {
   return (
     <div className={cn('flex w-full items-center justify-between', className)}>
-      <div className="flex items-center gap-2">
-        <div data-tauri-drag-region="true" className="draggable flex items-center space-x-4">
+      <div className="flex flex-col gap-2 min-w-0 flex-1">
+        <div
+          data-tauri-drag-region="true"
+          className="draggable flex items-center space-x-4 min-w-0"
+        >
           {headingPrefix && (
             <>
               <h1 className="font-heading text-xl font-bold tracking-tight text-muted-foreground">
@@ -29,11 +32,15 @@ export function ApplicationHeader({
             </>
           )}
 
-          <h1 className="font-heading text-xl font-bold tracking-tight">{heading}</h1>
-          {text && <p className="ml-4 text-lg font-light text-muted-foreground">{text}</p>}
+          <h1 className="font-heading text-xl font-bold tracking-tight truncate">{heading}</h1>
         </div>
+        {text && (
+          <p className="hidden sm:block text-sm sm:text-base font-light text-muted-foreground">
+            {text}
+          </p>
+        )}
       </div>
-      {children}
+      {children && <div className="flex-shrink-0 ml-4">{children}</div>}
     </div>
   );
 }
