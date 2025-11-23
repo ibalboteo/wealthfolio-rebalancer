@@ -90,53 +90,55 @@ export function HoldingPlanner({ ctx, onSave }: HoldingPlannerProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 py-4">
-      {holdings?.map((holding, idx) => (
-        <div key={holding.id} className="flex items-center gap-4 rounded border p-4 min-w-0">
-          <fieldset
-            className={cn(
-              'grow basis-0 flex items-center gap-4 min-w-0',
-              !formState[idx]?.enabled && 'opacity-60 grayscale select-none'
-            )}
-            disabled={!formState[idx]?.enabled}
-          >
-            <TickerAvatar
-              symbol={holding.instrument?.symbol || `$${holding.holdingType}`}
-              className="w-8 h-8 flex-none"
-            />
-            <div className="grow min-w-0">
-              <div className="font-medium capitalize truncate">
-                {holding.instrument?.symbol || holding.holdingType}
-              </div>
-              {holding.instrument?.name && (
-                <div
-                  className="text-xs text-muted-foreground truncate"
-                  title={holding.instrument?.name}
-                >
-                  {holding.instrument?.name}
-                </div>
+    <form onSubmit={handleSubmit} className="flex flex-col h-full">
+      <div className="space-y-4 py-4 flex-1 overflow-y-auto">
+        {holdings?.map((holding, idx) => (
+          <div key={holding.id} className="flex items-center gap-4 rounded border p-4 min-w-0">
+            <fieldset
+              className={cn(
+                'grow basis-0 flex items-center gap-4 min-w-0',
+                !formState[idx]?.enabled && 'opacity-60 grayscale select-none'
               )}
-            </div>
-            <Input
-              type="number"
-              value={formState[idx]?.target}
-              min={0}
-              max={100}
-              step={0.01}
-              onChange={(e) => handleChange(idx, 'target', parseFloat(e.target.value))}
-              className={cn('w-24 text-right', {
-                'bg-muted/40 text-muted-foreground': !formState[idx]?.enabled,
-              })}
-              placeholder="0.00"
+              disabled={!formState[idx]?.enabled}
+            >
+              <TickerAvatar
+                symbol={holding.instrument?.symbol || `$${holding.holdingType}`}
+                className="w-8 h-8 flex-none"
+              />
+              <div className="grow min-w-0">
+                <div className="font-medium capitalize truncate">
+                  {holding.instrument?.symbol || holding.holdingType}
+                </div>
+                {holding.instrument?.name && (
+                  <div
+                    className="text-xs text-muted-foreground truncate"
+                    title={holding.instrument?.name}
+                  >
+                    {holding.instrument?.name}
+                  </div>
+                )}
+              </div>
+              <Input
+                type="number"
+                value={formState[idx]?.target}
+                min={0}
+                max={100}
+                step={0.01}
+                onChange={(e) => handleChange(idx, 'target', parseFloat(e.target.value))}
+                className={cn('w-24 text-right', {
+                  'bg-muted/40 text-muted-foreground': !formState[idx]?.enabled,
+                })}
+                placeholder="0.00"
+              />
+            </fieldset>
+            <Switch
+              checked={formState[idx]?.enabled}
+              onCheckedChange={(checked) => handleChange(idx, 'enabled', checked)}
             />
-          </fieldset>
-          <Switch
-            checked={formState[idx]?.enabled}
-            onCheckedChange={(checked) => handleChange(idx, 'enabled', checked)}
-          />
-        </div>
-      ))}
-      <div className="flex justify-end">
+          </div>
+        ))}
+      </div>
+      <div className="flex justify-end pt-4 border-t">
         <Button type="submit">Save</Button>
       </div>
     </form>
