@@ -1,6 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
 import type { AddonContext, Holding } from '@wealthfolio/addon-sdk';
 import { addonName } from '../lib';
+import { isRecord, readStorage } from '../lib/storage';
 import { useLocalStorage } from './use-local-storage';
 
 export interface HoldingPlanData {
@@ -13,47 +14,67 @@ export interface PlannedHolding extends Holding {
   plan: HoldingPlanData;
 }
 
+function isHoldingPlanData(value: unknown): value is HoldingPlanData {
+  if (!isRecord(value)) return false;
+
+  return (
+    typeof value.id === 'string' &&
+    typeof value.target === 'number' &&
+    Number.isFinite(value.target) &&
+    typeof value.enabled === 'boolean'
+  );
+}
+
+export function isHoldingPlanDataArray(value: unknown): value is HoldingPlanData[] {
+  return Array.isArray(value) && value.every(isHoldingPlanData);
+}
+
 interface UseHoldingsOptions {
   accountId: string;
   ctx: AddonContext;
   enabled?: boolean;
 }
 
+async function fetchHoldings(accountId: string, ctx: AddonContext): Promise<PlannedHolding[]> {
+  if (!accountId || !ctx.api) {
+    throw new Error('Account ID and API context are required');
+  }
+
+  const data = await ctx.api.portfolio.getHoldings(accountId);
+  const holdings = Array.isArray(data) ? data : [];
+
+  const planKey = `addons:${addonName}:account:${accountId}:plan`;
+  const plan = readStorage<HoldingPlanData[]>(planKey, [], isHoldingPlanDataArray);
+
+  const holdingsExtra = holdings.map((holding) => {
+    const holdingPlan = plan.find((p: HoldingPlanData) => p.id === holding.id);
+    return {
+      ...holding,
+      plan: holdingPlan ?? { id: holding.id, target: 0, enabled: true },
+    } as PlannedHolding;
+  });
+
+  return holdingsExtra.sort((a, b) => b.weight - a.weight);
+}
+
+const holdingsQueryOptions = (accountId: string, ctx: AddonContext) => ({
+  queryKey: ['holdings', accountId] as const,
+  queryFn: () => fetchHoldings(accountId, ctx),
+  staleTime: 5 * 60 * 1000,
+  gcTime: 10 * 60 * 1000,
+  retry: 3,
+  retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 30000),
+});
+
 export function useHoldings({ accountId, ctx, enabled = true }: UseHoldingsOptions) {
   return useQuery({
-    queryKey: ['holdings', accountId],
-    queryFn: async () => {
-      if (!accountId || !ctx.api) {
-        throw new Error('Account ID and API context are required');
-      }
-
-      const data = await ctx.api.portfolio.getHoldings(accountId);
-      // Append extra data (coming from localStorage or defaults)
-      // Local storage should have keys like
-      // addons:rebalancer:account:<accountId>:plan
-      const holdingsExtra = data.map((holding) => {
-        const planKey = `addons:${addonName}:account:${accountId}:plan`;
-        const plan = JSON.parse(localStorage.getItem(planKey) || '[]') as HoldingPlanData[];
-        const holdingPlan = plan.find((p: HoldingPlanData) => p.id === holding.id);
-
-        return {
-          ...holding,
-          plan: holdingPlan ?? { id: holding.id, target: 0, enabled: true },
-        } as PlannedHolding;
-      });
-
-      const sorteredHoldings = holdingsExtra.sort((a, b) => {
-        return b.weight - a.weight;
-      });
-
-      return sorteredHoldings || [];
-    },
+    ...holdingsQueryOptions(accountId, ctx),
     enabled: enabled && !!accountId && !!ctx.api,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
+}
+
+export function useSuspenseHoldings({ accountId, ctx }: Omit<UseHoldingsOptions, 'enabled'>) {
+  return useSuspenseQuery(holdingsQueryOptions(accountId, ctx));
 }
 
 export interface UpdateHoldingParams {
@@ -63,9 +84,9 @@ export interface UpdateHoldingParams {
 export function useUpdateHolding({ accountId }: UpdateHoldingParams) {
   const queryClient = useQueryClient();
 
-  const planKey = `addons:rebalancer:account:${accountId}:plan`;
+  const planKey = `addons:${addonName}:account:${accountId}:plan`;
 
-  const [plan, setPlan] = useLocalStorage<HoldingPlanData[]>(planKey, []);
+  const [plan, setPlan] = useLocalStorage<HoldingPlanData[]>(planKey, [], isHoldingPlanDataArray);
 
   const mutation = useMutation({
     mutationFn: async (plan: HoldingPlanData[]) => {

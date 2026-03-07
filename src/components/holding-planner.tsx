@@ -1,8 +1,8 @@
-import type { AddonContext } from '@wealthfolio/addon-sdk/types';
-import { Button, cn, Input, Switch } from '@wealthfolio/ui';
+import type { AddonContext } from '@wealthfolio/addon-sdk';
+import { Button, cn, Icons, Input, Switch } from '@wealthfolio/ui';
 import type { FormEvent } from 'react';
 import { useEffect, useState } from 'react';
-import { type HoldingPlanData, useHoldings, useToast, useUpdateHolding } from '../hooks';
+import { type HoldingPlanData, useHoldings, useUpdateHolding } from '../hooks';
 import { useSelectedAccount } from '../lib/account-provider';
 import { TickerAvatar } from './ticker-avatar';
 
@@ -12,62 +12,48 @@ export interface HoldingPlannerProps {
 }
 
 export function HoldingPlanner({ ctx, onSave }: HoldingPlannerProps) {
-  const { toast } = useToast();
   const { selectedAccount } = useSelectedAccount();
+  const accountId = selectedAccount?.id ?? '';
   const { data: holdings } = useHoldings({
-    accountId: selectedAccount?.id || '',
+    accountId,
     ctx,
+    enabled: !!accountId,
   });
 
   const { mutation } = useUpdateHolding({
-    accountId: selectedAccount?.id || '',
+    accountId,
   });
 
-  // Estado local para los valores del formulario
   const [formState, setFormState] = useState<HoldingPlanData[]>([]);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   // Actualiza el estado local cuando cambian los holdings
   useEffect(() => {
-    if (holdings && holdings.length > 0) {
-      setFormState(
-        holdings.map((h) => ({
-          id: h.id,
-          target: h.plan.target,
-          enabled: h.plan.enabled,
-        }))
-      );
-    }
+    setFormState(
+      (holdings ?? []).map((h) => ({
+        id: h.id,
+        target: h.plan.target,
+        enabled: h.plan.enabled,
+      }))
+    );
+    setValidationError(null);
   }, [holdings]);
 
   // Submit handler
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    // Check total percentage
-    const total = formState.reduce((sum, item) => sum + item.target, 0);
-    if (total !== 100) {
-      toast({
-        title: 'Error',
-        description: 'Total target percentage must equal 100%',
-        variant: 'destructive',
-      });
+    const enabledTotal = formState
+      .filter((item) => item.enabled)
+      .reduce((sum, item) => sum + item.target, 0);
+    const rounded = Math.round(enabledTotal * 100) / 100;
+    if (rounded !== 100) {
+      setValidationError(`Enabled targets sum to ${rounded.toFixed(2)}% — must equal 100%`);
       return;
     }
+    setValidationError(null);
     mutation.mutate(formState, {
-      onSuccess: () => {
-        toast({
-          title: 'Success',
-          description: 'Holding plan updated successfully',
-          variant: 'success',
-        });
-        onSave?.();
-      },
-      onError: () => {
-        toast({
-          title: 'Error',
-          description: 'Failed to update holding plan',
-          variant: 'destructive',
-        });
-      },
+      onSuccess: () => onSave?.(),
+      onError: () => setValidationError('Failed to save the plan. Please try again.'),
     });
   };
 
@@ -81,6 +67,7 @@ export function HoldingPlanner({ ctx, onSave }: HoldingPlannerProps) {
     setFormState((prev) =>
       prev.map((item, i) => (i === index ? { ...item, [field]: value } : item))
     );
+    setValidationError(null);
   };
 
   return (
@@ -132,8 +119,19 @@ export function HoldingPlanner({ ctx, onSave }: HoldingPlannerProps) {
           </div>
         ))}
       </div>
-      <div className="flex justify-end pt-4 border-t">
-        <Button type="submit">Save</Button>
+      <div className="flex items-center justify-between gap-4 pt-4 border-t">
+        {validationError ? (
+          <p className="flex items-center gap-1.5 text-sm text-destructive">
+            <Icons.XCircle className="h-4 w-4 shrink-0" />
+            {validationError}
+          </p>
+        ) : (
+          <span />
+        )}
+        <Button type="submit" disabled={mutation.isPending}>
+          {mutation.isPending ? <Icons.Loader className="h-4 w-4 animate-spin mr-2" /> : null}
+          Save
+        </Button>
       </div>
     </form>
   );
