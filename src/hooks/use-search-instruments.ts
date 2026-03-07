@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import type { AddonContext, QuoteSummary } from '@wealthfolio/addon-sdk';
+import type { AddonContext, SymbolSearchResult } from '@wealthfolio/addon-sdk';
 
 interface UseSearchInstrumentsOptions {
   query: string;
@@ -8,7 +8,7 @@ interface UseSearchInstrumentsOptions {
 }
 
 export function useSearchInstruments({ query, ctx, enabled = true }: UseSearchInstrumentsOptions) {
-  return useQuery<QuoteSummary[]>({
+  return useQuery<SymbolSearchResult[]>({
     queryKey: ['search-instruments', query],
     queryFn: async () => {
       if (!ctx.api || !query.trim()) {

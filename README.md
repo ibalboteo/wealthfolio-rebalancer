@@ -2,126 +2,128 @@
 
 > Keep your portfolio aligned with your investment goals.
 
-An unofficial Wealthfolio plugin that analyzes your portfolio and suggests the exact transfers needed to maintain your target asset allocations.
+An unofficial Wealthfolio addon that analyses your portfolio and calculates the exact transfers needed to reach your target allocations — with a configurable deviation threshold so you only act when it truly matters.
 
 ## Description
 
-Rebalancer helps you maintain optimal portfolio balance by calculating precise rebalancing recommendations. Instead of guessing which assets to buy or sell, get data-driven suggestions that keep your investments aligned with your strategic allocation targets.
+Rebalancer compares your current holdings against a plan you define and applies a minimum-cost transportation algorithm to find the smallest set of transfers that brings every position back on target. You get clear, actionable transfer cards instead of vague percentages.
 
 **Important:** Rebalancer is an analysis and recommendation tool only. It does not execute trades, transfers, or any financial transactions.
 
-## Key Features
+## Features
 
-- **Smart Analysis**: Automatically calculates deviations from target allocations
-- **Transfer Recommendations**: Suggests exact amounts to buy, sell, or transfer
-- **Multi-Account Support**: Works across different account types and brokerages
-- **Visual Planning**: Clear interface showing current vs. target allocations
-- **Zero Risk**: Read-only analysis with no trading capabilities
-- **Wealthfolio Integration**: Seamless sidebar integration with your existing workflow
+| Feature | Details |
+|---|---|
+| **Minimum-cost rebalance** | Transfers the least possible amount to reach every target, using a transportation simplex algorithm |
+| **Configurable threshold** | Skip transfers below a chosen deviation (0–20 pp, step 0.5) — only rebalance when it's worth it |
+| **Per-transfer contribution** | Each transfer card shows how many percentage points that specific transfer moves the position |
+| **Current vs Target preview** | A side panel compares every enabled holding: current %, target %, projected value after rebalancing, and ±pp deviation |
+| **Colour-coded deviations** | Blue = underweight (buying), Red = overweight (selling), Green = within threshold |
+| **Multi-account support** | Switch between accounts; plan and threshold are persisted per-account and globally |
+| **Instant UI sync** | Changes to the plan or threshold reflect immediately without a page reload |
+| **Zero flash on load** | React Suspense + `useSuspenseQuery` eliminate the loading flicker on reload |
+| **Read-only** | No brokerage connections, no trade execution |
+
+## Usage
+
+1. **Select an account** from the dropdown in the top toolbar.
+2. **Create a plan** — open *Edit Plan* and assign target percentages to each holding. All enabled targets must sum to 100%.
+3. **Set a threshold** (optional) — use the **Rebalance threshold** stepper in *Edit Plan* to ignore deviations smaller than X pp.
+4. **Review transfer cards** — each card shows the FROM holding, the TO holding, and the exact amount to move.
+5. **Check the preview** — open *Preview* to see the full allocation breakdown: current % → target %, projected value, and deviation badge.
+6. **Execute manually** — place the trades in your brokerage and record them in Wealthfolio.
+
+### Threshold example
+
+```
+Target: 60% VTI / 40% BND   Threshold: 2 pp
+
+VTI 61.5% (+1.5pp), BND 38.5% (−1.5pp)  →  Both within 2 pp  →  No transfers suggested ✓
+VTI 64.0% (+4.0pp), BND 36.0% (−4.0pp)  →  Both exceed threshold  →  Transfer suggested
+```
 
 ## Installation
 
 ### Prerequisites
 
 - Wealthfolio application installed
-- Plugin system enabled in Wealthfolio settings
+- Addon system enabled in Wealthfolio settings
 
-### Install Plugin
+### Install
 
-1. Download the latest release from the [releases page](../../releases)
-2. Extract the ZIP file to your Wealthfolio plugins directory
-3. Restart Wealthfolio
-4. Enable the Rebalancer plugin in Settings > Plugins
+1. Download the latest release from the [releases page](../../releases).
+2. Extract the ZIP and place the folder in your Wealthfolio addons directory.
+3. Restart Wealthfolio.
+4. Enable Rebalancer in **Settings › Addons**.
 
-### Alternative: Manual Installation
+### Build from source
 
 ```bash
-# Clone the repository
 git clone https://github.com/yourusername/rebalancer.git
 cd rebalancer
-
-# Install dependencies
 pnpm install
-
-# Build the plugin
 pnpm build
-
-# Package for installation
-pnpm bundle
+pnpm bundle   # creates the distributable ZIP
 ```
-
-## Usage
-
-1. **Open Rebalancer**: Navigate to the Rebalancer section in your Wealthfolio sidebar
-2. **Select Accounts**: Choose which accounts to include in the analysis
-3. **Set Targets**: Define your desired asset allocation percentages
-4. **Analyze**: Review current allocations vs. targets
-5. **Get Recommendations**: View suggested transfers to rebalance your portfolio
-6. **Execute Manually**: Use the recommendations to make trades in your brokerage accounts
-
-### Example Workflow
-
-```
-Current Portfolio: 70% Stocks, 30% Bonds
-Target Allocation: 60% Stocks, 40% Bonds
-→ Rebalancer suggests: Transfer $5,000 from Stock ETF to Bond ETF
-```
-
-## Limitations & Disclaimer
-
-- **Unofficial Plugin**: Not developed or endorsed by the Wealthfolio team
-- **Analysis Only**: Does not execute trades or connect to brokerage accounts
-- **Manual Execution Required**: You must manually implement suggested changes
-- **No Financial Advice**: Recommendations are mathematical calculations, not investment advice
-- **Data Accuracy**: Results depend on accurate portfolio data in Wealthfolio
 
 ## Development
 
-### Setup
-
 ```bash
-# Install dependencies
-pnpm install
-
-# Start development server
-pnpm dev:server
-
-# Run in watch mode
-pnpm dev
-```
-
-### Commands
-
-```bash
-# Build for production
-pnpm build
-
-# Run linting and formatting
-pnpm check
-
-# Run tests
-pnpm test
-
-# Package for distribution
-pnpm bundle
+pnpm install        # install dependencies
+pnpm dev:server     # start the Wealthfolio addon dev server
+pnpm dev            # build in watch mode
+pnpm type-check     # TypeScript check
+pnpm check          # Biome lint + format
+pnpm test           # Vitest unit tests (54 tests)
+pnpm build          # production build
 ```
 
 ### Tech Stack
 
-- **Framework**: React + TypeScript
+- **Framework**: React 19 + TypeScript
+- **State / Data**: TanStack Query v5 (with Suspense)
 - **Build Tool**: Vite
 - **Code Quality**: Biome (linting + formatting)
-- **Testing**: Vitest
-- **Git Hooks**: Lefthook
+- **Testing**: Vitest — 54 tests covering rebalance algorithm, storage helpers, and plan hooks
+- **Git Hooks**: Lefthook (type-check + Biome on pre-commit)
+- **SDK**: Wealthfolio Addon SDK v3
+
+### Project structure
+
+```
+src/
+  addon.tsx                  # addon entry point
+  pages/
+    rebalancer.tsx           # main page, Suspense boundary, PreviewSheet, EditPlanSheet
+  components/
+    holding-planner.tsx      # plan editor with inline validation
+    transfer-card.tsx        # individual transfer card with ContributionLine
+    account-selector.tsx
+    instrument-selector.tsx
+    ticker-avatar.tsx
+  hooks/
+    use-holdings.ts          # useHoldings / useSuspenseHoldings + plan merge
+    use-rebalance.ts         # useRebalance, useTolerance, constants
+    use-local-storage.ts     # cross-tab + same-tab storage sync
+  lib/
+    rebalance-utils.ts       # calculateRebalanceActions, simulateRebalance
+    storage.ts               # readStorage / writeStorage with validation
+    rebalance-utils.test.ts
+    storage.test.ts
+```
+
+## Limitations & Disclaimer
+
+- **Unofficial addon** — not developed or endorsed by the Wealthfolio team.
+- **Analysis only** — does not execute trades or connect to brokerage accounts.
+- **Manual execution required** — you must implement the suggested transfers yourself.
+- **No financial advice** — recommendations are mathematical calculations, not personalised investment advice.
+- **Data accuracy** — results depend on accurate and up-to-date data in Wealthfolio.
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) file for details.
-
-## Contributing
-
-Contributions are welcome! Please read our contributing guidelines and submit pull requests for any improvements.
+MIT License — see [LICENSE](LICENSE) for details.
 
 ---
 
-**Disclaimer**: This plugin is not affiliated with Wealthfolio. Use at your own risk and always verify recommendations before executing trades.
+**Disclaimer**: This addon is not affiliated with Wealthfolio. Use at your own risk and always verify recommendations before executing trades.

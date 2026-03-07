@@ -1,4 +1,4 @@
-import type { AddonContext, QuoteSummary } from '@wealthfolio/addon-sdk';
+import type { AddonContext, SymbolSearchResult } from '@wealthfolio/addon-sdk';
 import {
   Button,
   Command,
@@ -18,7 +18,7 @@ import { TickerAvatar } from './ticker-avatar';
 
 interface InstrumentSelectorProps {
   ctx: AddonContext;
-  onSelect: (instrument: QuoteSummary) => void;
+  onSelect: (instrument: SymbolSearchResult) => void;
   disabled?: boolean;
 }
 
@@ -34,7 +34,7 @@ export function InstrumentSelector({ ctx, onSelect, disabled }: InstrumentSelect
 
   const instruments = Array.isArray(instrumentsData) ? instrumentsData : [];
 
-  const handleSelect = (instrument: QuoteSummary) => {
+  const handleSelect = (instrument: SymbolSearchResult) => {
     onSelect(instrument);
     setOpen(false);
     setSearchQuery('');
@@ -66,7 +66,7 @@ export function InstrumentSelector({ ctx, onSelect, disabled }: InstrumentSelect
               <CommandEmpty>No instruments found</CommandEmpty>
             ) : (
               <CommandGroup>
-                {instruments.slice(0, 10).map((instrument: QuoteSummary) => (
+                {instruments.slice(0, 10).map((instrument: SymbolSearchResult) => (
                   <CommandItem
                     key={instrument.symbol}
                     value={instrument.symbol}
