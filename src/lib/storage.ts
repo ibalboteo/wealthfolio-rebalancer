@@ -25,8 +25,14 @@ export function writeStorage<T>(key: string, value: T) {
 
   try {
     window.localStorage.setItem(key, JSON.stringify(value));
-    // Notify same-tab listeners (native 'storage' event only fires cross-tab)
-    window.dispatchEvent(new CustomEvent('local-storage-write', { detail: { key } }));
+    // Defer the event so React doesn't see a state update in another component
+    // during the current render/commit cycle (avoids the "Cannot update a component
+    // while rendering a different component" warning).
+    queueMicrotask(() => {
+      if (typeof window?.dispatchEvent === 'function') {
+        window.dispatchEvent(new CustomEvent('local-storage-write', { detail: { key } }));
+      }
+    });
   } catch {
     // Ignore persistence errors to keep UI stable
   }
