@@ -271,7 +271,6 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
               to={to}
               amount={amount}
               currency={currency}
-              totalPortfolioValue={rebalancePlan.totalPreviewValue}
             />
           ))}
           {onTargetHoldings.map((h) => (

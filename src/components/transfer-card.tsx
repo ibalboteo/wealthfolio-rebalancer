@@ -11,7 +11,6 @@ const cardVariants = {
 
 type TransferCardProps = RebalanceAction & {
   status: 'transfer';
-  totalPortfolioValue: number;
 };
 
 type OnTargetCardProps = {
@@ -69,8 +68,9 @@ export function HoldingCard(props: HoldingCardProps) {
     );
   }
 
-  const { from, to, amount, currency, totalPortfolioValue } = props;
-  const transferPct = totalPortfolioValue > 0 ? (amount / totalPortfolioValue) * 100 : 0;
+  const { from, to, amount, currency } = props;
+  const transferPct =
+    from.marketValue.base > 0 ? Math.min(100, (amount / from.marketValue.base) * 100) : 0;
 
   return (
     <Card className={className}>
