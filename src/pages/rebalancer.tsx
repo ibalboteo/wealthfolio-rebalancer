@@ -292,28 +292,26 @@ export function Rebalancer({ ctx }: { ctx: AddonContext }) {
   const { selectedAccount } = useSelectedAccount();
 
   return (
-    <div className="p-6 pb-20 sm:pb-0 flex flex-col h-full overflow-hidden">
-      <div className="flex flex-col h-full w-full gap-6">
-        <ApplicationHeader
-          className="shrink-0"
-          heading={pascalCase(addonName)}
-          text="Keep your portfolio aligned with your investment goals"
-        >
-          <AccountSelector ctx={ctx} />
-        </ApplicationHeader>
+    <div className="p-6 flex flex-col h-full gap-6">
+      <ApplicationHeader
+        className="shrink-0"
+        heading={pascalCase(addonName)}
+        text="Keep your portfolio aligned with your investment goals"
+      >
+        <AccountSelector ctx={ctx} />
+      </ApplicationHeader>
 
-        {!selectedAccount ? (
-          <div className="flex items-center justify-center flex-1 min-h-0">
-            <p className="text-lg font-light text-muted-foreground text-center max-w-md">
-              Please select an account to identify rebalance opportunities.
-            </p>
-          </div>
-        ) : (
-          <Suspense fallback={<LoadingSpinner />}>
-            <RebalancerContent ctx={ctx} accountId={selectedAccount.id} />
-          </Suspense>
-        )}
-      </div>
+      {!selectedAccount ? (
+        <div className="flex items-center justify-center flex-1 min-h-0">
+          <p className="text-lg font-light text-muted-foreground text-center max-w-md">
+            Please select an account to identify rebalance opportunities.
+          </p>
+        </div>
+      ) : (
+        <Suspense fallback={<LoadingSpinner />}>
+          <RebalancerContent ctx={ctx} accountId={selectedAccount.id} />
+        </Suspense>
+      )}
     </div>
   );
 }
