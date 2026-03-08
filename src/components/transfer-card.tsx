@@ -1,73 +1,109 @@
-import { AmountDisplay, Card, cn, Icons } from '@wealthfolio/ui';
+import { AmountDisplay, Card, Icons } from '@wealthfolio/ui';
 import type { PlannedHolding } from '../hooks/use-holdings';
 import type { RebalanceAction } from '../lib';
 import { TickerAvatar } from './ticker-avatar';
 
-function ContributionLine({
-  holding,
-  total,
-  contribution,
-}: {
-  holding: PlannedHolding;
-  total: number;
-  contribution: number; // positive = buying (to), negative = selling (from)
-}) {
-  if (!holding.plan?.enabled || total === 0) return null;
-  const currentPct = (holding.marketValue.base / total) * 100;
-  const contributionPct = (contribution / total) * 100;
-  const sign = contributionPct > 0 ? '+' : '';
-  const colorClass = contributionPct > 0 ? 'text-blue-500' : 'text-red-500';
-  return (
-    <span className="text-xs text-muted-foreground tabular-nums">
-      {currentPct.toFixed(1)}%{' '}
-      <span className={cn('font-semibold', colorClass)}>
-        {sign}
-        {contributionPct.toFixed(1)}pp
-      </span>
-    </span>
-  );
-}
+const cardBase = 'rounded-lg border shadow-md p-6 flex flex-col gap-4 h-64';
+const cardVariants = {
+  transfer: 'bg-card text-card-foreground',
+  'on-target': 'border-success/20 bg-success/5',
+} as const;
 
-interface TransferCardProps extends RebalanceAction {
+type TransferCardProps = RebalanceAction & {
+  status: 'transfer';
   totalPortfolioValue: number;
-}
+};
 
-export function TransferCard({
-  from,
-  to,
-  amount,
-  currency,
-  totalPortfolioValue,
-}: TransferCardProps) {
+type OnTargetCardProps = {
+  status: 'on-target';
+  holding: PlannedHolding;
+  totalPortfolioValue: number;
+};
+
+type HoldingCardProps = TransferCardProps | OnTargetCardProps;
+
+export function HoldingCard(props: HoldingCardProps) {
+  const className = `${cardBase} ${cardVariants[props.status]}`;
+
+  if (props.status === 'on-target') {
+    const { holding, totalPortfolioValue } = props;
+    const total = totalPortfolioValue;
+    const currentPct = total > 0 ? (holding.marketValue.base / total) * 100 : 0;
+    const targetPct = holding.plan?.target ?? 0;
+    const deviation = currentPct - targetPct;
+    const deviationLabel = `${deviation >= 0 ? '+' : ''}${deviation.toFixed(1)}pp`;
+
+    return (
+      <Card className={className}>
+        <div className="flex items-center gap-4">
+          <TickerAvatar
+            symbol={holding.instrument?.symbol || `$${holding.holdingType}`}
+            className="w-12 h-12 flex-none"
+          />
+          <h3 className="text-sm font-semibold truncate">
+            {holding.instrument?.name || holding.instrument?.symbol || holding.holdingType}
+          </h3>
+        </div>
+
+        <div className="flex items-center gap-4 flex-1">
+          <div className="w-12 flex-none" />
+          <AmountDisplay
+            value={holding.marketValue.base}
+            currency={holding.baseCurrency}
+            className="text-xl font-bold"
+          />
+        </div>
+
+        <div className="flex items-center gap-4 h-12">
+          <div className="w-12 flex-none flex justify-center">
+            <Icons.CheckCircle className="w-5 h-5 text-green-500" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-sm font-semibold text-green-500">On target</span>
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {currentPct.toFixed(1)}% ({deviationLabel})
+            </span>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  const { from, to, amount, currency, totalPortfolioValue } = props;
+  const transferPct = totalPortfolioValue > 0 ? (amount / totalPortfolioValue) * 100 : 0;
+
   return (
-    <Card className="rounded-lg border bg-card text-card-foreground shadow-md p-6 flex flex-col gap-4 h-64">
+    <Card className={className}>
       <div className="flex items-center gap-4">
         <TickerAvatar
           symbol={from.instrument?.symbol || `$${from.holdingType}`}
-          className="w-12 h-12"
+          className="w-12 h-12 flex-none"
         />
-        <div className="grow flex flex-col min-w-0">
-          <h3 className="text-sm font-semibold truncate">
-            {from.instrument?.name || from.instrument?.symbol || from.holdingType}
-          </h3>
-          <ContributionLine holding={from} total={totalPortfolioValue} contribution={-amount} />
+        <h3 className="text-sm font-semibold truncate">
+          {from.instrument?.name || from.instrument?.symbol || from.holdingType}
+        </h3>
+      </div>
+
+      <div className="flex items-center gap-4 flex-1">
+        <div className="w-12 flex-none flex justify-center">
+          <Icons.ArrowDown className="w-5 h-5 text-muted-foreground" />
+        </div>
+        <div className="flex items-baseline gap-2">
+          <AmountDisplay value={amount} currency={currency} className="text-xl font-bold" />
+          <span className="text-sm font-medium text-muted-foreground tabular-nums">
+            {transferPct.toFixed(1)}%
+          </span>
         </div>
       </div>
-      <div className="flex items-center gap-4 justify-center flex-1">
-        <Icons.ArrowDown className="w-8 h-8 mx-2 text-muted-foreground" />
-        <AmountDisplay value={amount} currency={currency} className="text-xl font-bold" />
-      </div>
+
       <div className="flex items-center gap-4">
         <TickerAvatar
           symbol={to.instrument?.symbol || `$${to.holdingType}`}
-          className="w-12 h-12"
+          className="w-12 h-12 flex-none"
         />
-        <div className="grow flex flex-col min-w-0">
-          <h3 className="text-sm font-semibold truncate">
-            {to.instrument?.name || to.instrument?.symbol || to.holdingType}
-          </h3>
-          <ContributionLine holding={to} total={totalPortfolioValue} contribution={amount} />
-        </div>
+        <h3 className="text-sm font-semibold truncate">
+          {to.instrument?.name || to.instrument?.symbol || to.holdingType}
+        </h3>
       </div>
     </Card>
   );
