@@ -95,13 +95,22 @@ export function calculateRebalanceActions(
   // Deviations (target es porcentaje 0-100)
   const deviations = enabledHoldings.map((h) => h.marketValue.base - (h.plan.target / 100) * total);
 
+  // Portfolio-level check: if NO holding exceeds the tolerance, the portfolio is
+  // already balanced, nothing to do. This prevents the fragmented-excess bug
+  // where individual holdings each sit within tolerance but one is clearly off.
+  const anyOutOfTolerance = deviations.some((d) => Math.abs(d) > margin);
+  if (!anyOutOfTolerance) return [];
+
+  // Once we know action is needed, collect supply from ALL overweight holdings
+  // (not just those individually above the margin).  This is the fix for the
+  // case where excess is split across several holdings each below the threshold.
   const excessIdx = deviations
     .map((d, i) => ({ d, i }))
-    .filter((x) => x.d > margin)
+    .filter((x) => x.d > 0)
     .sort((a, b) => b.d - a.d);
   const deficitIdx = deviations
     .map((d, i) => ({ d, i }))
-    .filter((x) => x.d < -margin)
+    .filter((x) => x.d < 0)
     .sort((a, b) => a.d - b.d);
 
   if (!excessIdx.length || !deficitIdx.length) return [];

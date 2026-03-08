@@ -47,7 +47,7 @@ export function HoldingPlanner({ ctx, onSave }: HoldingPlannerProps) {
       .reduce((sum, item) => sum + item.target, 0);
     const rounded = Math.round(enabledTotal * 100) / 100;
     if (rounded !== 100) {
-      setValidationError(`Enabled targets sum to ${rounded.toFixed(2)}% — must equal 100%`);
+      setValidationError(`Enabled targets sum to ${rounded.toFixed(2)}%, must equal 100%`);
       return;
     }
     setValidationError(null);

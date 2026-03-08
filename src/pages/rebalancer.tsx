@@ -39,7 +39,6 @@ interface EditPlanSheetProps {
 
 export function EditPlanSheet({ ctx, label = 'Edit Plan', compact = false }: EditPlanSheetProps) {
   const [open, setOpen] = useState(false);
-  const [tolerancePp, setTolerancePp] = useTolerance();
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -62,45 +61,6 @@ export function EditPlanSheet({ ctx, label = 'Edit Plan', compact = false }: Edi
           </SheetDescription>
         </SheetHeader>
 
-        {/* Tolerance threshold control */}
-        <div className="flex-shrink-0 flex items-center justify-between border rounded-lg px-4 py-3 bg-muted/30">
-          <div className="leading-tight">
-            <p className="text-sm font-medium">Rebalance threshold</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {tolerancePp === 0
-                ? 'Rebalance on any deviation'
-                : `Skip transfers below ${tolerancePp}pp deviation`}
-            </p>
-          </div>
-          <div className="flex items-center gap-1">
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => setTolerancePp(tolerancePp - TOLERANCE_STEP)}
-              disabled={tolerancePp <= TOLERANCE_MIN}
-              aria-label="Decrease threshold"
-            >
-              <Icons.Minus className="h-3 w-3" />
-            </Button>
-            <span className="min-w-[3.5rem] text-center text-sm font-medium tabular-nums">
-              {tolerancePp === 0 ? 'Any' : `${tolerancePp.toFixed(1)} pp`}
-            </span>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => setTolerancePp(tolerancePp + TOLERANCE_STEP)}
-              disabled={tolerancePp >= TOLERANCE_MAX}
-              aria-label="Increase threshold"
-            >
-              <Icons.Plus className="h-3 w-3" />
-            </Button>
-          </div>
-        </div>
-
         <div className="flex-1 min-h-0">
           <HoldingPlanner ctx={ctx} onSave={() => setOpen(false)} />
         </div>
@@ -112,9 +72,11 @@ export function EditPlanSheet({ ctx, label = 'Edit Plan', compact = false }: Edi
 export function PreviewSheet({
   holdings,
   rebalancePlan,
+  tolerancePp,
 }: {
   holdings: PlannedHolding[];
   rebalancePlan: RebalancePlan | undefined;
+  tolerancePp: number;
 }) {
   const total = rebalancePlan?.totalPreviewValue ?? 0;
   const previewById = new Map(rebalancePlan?.previewHoldings.map((h) => [h.id, h]));
@@ -177,14 +139,19 @@ export function PreviewSheet({
       </SheetTrigger>
       <SheetContent className="w-full sm:max-w-lg flex flex-col">
         <SheetHeader>
-          <SheetTitle>Allocation — Current vs Target</SheetTitle>
+          <SheetTitle>Allocation: Current vs Target</SheetTitle>
           <SheetDescription>
             How each position compares to its target after rebalancing.
           </SheetDescription>
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto space-y-1">
-          {enabledHoldings.map((h) => renderRow(h, !transferIds.has(h.id)))}
+          {enabledHoldings.map((h) => {
+            if (transferIds.has(h.id)) return renderRow(h, false);
+            const currentPct = total > 0 ? (h.marketValue.base / total) * 100 : 0;
+            const isOnTarget = Math.abs(currentPct - (h.plan?.target ?? 0)) <= tolerancePp;
+            return renderRow(h, isOnTarget);
+          })}
         </div>
       </SheetContent>
     </Sheet>
@@ -206,7 +173,7 @@ interface RebalancerContentProps {
 
 function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
   const { data: holdings } = useSuspenseHoldings({ accountId, ctx });
-  const [tolerancePp] = useTolerance();
+  const [tolerancePp, setTolerancePp] = useTolerance();
   const rebalancePlan = useRebalance({ ctx, tolerance: tolerancePp / 100 });
   const configurationRequired = useConfigure();
 
@@ -217,9 +184,18 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
   const transferIds = new Set(
     rebalancePlan?.transfers.flatMap(({ from, to }) => [from.id, to.id]) ?? []
   );
-  // Enabled holdings not involved in any transfer
+  const totalEnabledValue = rebalancePlan?.totalPreviewValue ?? 0;
+  // A holding is "on target" only when it is enabled, not part of a transfer,
+  // AND its actual deviation from target is within the configured tolerance.
+  // Checking the deviation directly prevents invalid localStorage data (e.g.
+  // all targets = 0) from making every holding appear on-target.
   const onTargetHoldings = hasPlan
-    ? holdings.filter((h) => h.plan?.enabled && !transferIds.has(h.id))
+    ? holdings.filter((h) => {
+        if (!h.plan?.enabled || transferIds.has(h.id)) return false;
+        const currentPct =
+          totalEnabledValue > 0 ? (h.marketValue.base / totalEnabledValue) * 100 : 0;
+        return Math.abs(currentPct - (h.plan?.target ?? 0)) <= tolerancePp;
+      })
     : [];
 
   if (!hasHoldings) {
@@ -253,12 +229,67 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
     );
   }
 
+  // Plan exists but produces no visible cards. The stored allocations are
+  // invalid (e.g. all targets = 0, or enabled weights don't sum to 100).
+  const planIsCorrupted =
+    hasPlan && (rebalancePlan?.transfers.length ?? 0) === 0 && onTargetHoldings.length === 0;
+
+  if (planIsCorrupted) {
+    return (
+      <div className="flex flex-col items-center justify-center flex-1 min-h-0 gap-6">
+        <div className="flex flex-col items-center gap-3 text-center max-w-md">
+          <Icons.AlertCircle className="h-6 w-6 text-muted-foreground" />
+          <p className="text-lg font-light text-muted-foreground">
+            Your plan needs adjustment. Make sure enabled allocations add up to 100%.
+          </p>
+        </div>
+        <EditPlanSheet ctx={ctx} label="Edit Plan" />
+      </div>
+    );
+  }
+
   return (
     <>
       {hasPlan && (
-        <div className="flex justify-end gap-2 shrink-0">
-          <PreviewSheet holdings={holdings} rebalancePlan={rebalancePlan} />
-          <EditPlanSheet ctx={ctx} compact />
+        <div className="flex items-center justify-between shrink-0 gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Threshold</span>
+            <div className="flex items-center gap-1">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => setTolerancePp(tolerancePp - TOLERANCE_STEP)}
+                disabled={tolerancePp <= TOLERANCE_MIN}
+                aria-label="Decrease threshold"
+              >
+                <Icons.Minus className="h-3 w-3" />
+              </Button>
+              <span className="min-w-[3rem] text-center text-sm font-medium tabular-nums">
+                {tolerancePp === 0 ? 'Any' : `${tolerancePp.toFixed(1)}pp`}
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => setTolerancePp(tolerancePp + TOLERANCE_STEP)}
+                disabled={tolerancePp >= TOLERANCE_MAX}
+                aria-label="Increase threshold"
+              >
+                <Icons.Plus className="h-3 w-3" />
+              </Button>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <PreviewSheet
+              holdings={holdings}
+              rebalancePlan={rebalancePlan}
+              tolerancePp={tolerancePp}
+            />
+            <EditPlanSheet ctx={ctx} compact />
+          </div>
         </div>
       )}
       <div className="flex-1 overflow-y-auto">

@@ -152,6 +152,100 @@ describe('calculateRebalanceActions – defensive edge cases', () => {
     const [transfer] = calculateRebalanceActions(holdings, 0);
     expect(transfer.currency).toBe('USD');
   });
+
+  // ── Edge-case regression tests ─────────────────────────────────────────────
+
+  it('bug-1 regression: returns [] when all targets are 0 (invalid plan forced via localStorage)', () => {
+    // All targets = 0 means there is nowhere to move money TO (no deficit
+    // holdings after target × total = 0 for everyone).  The function must
+    // return [] rather than letting the caller infer "everyone is on target".
+    const holdings = [
+      createHolding({ id: 'a', symbol: 'AAA', value: 1000, target: 0 }),
+      createHolding({ id: 'b', symbol: 'BBB', value: 500, target: 0 }),
+      createHolding({ id: 'c', symbol: 'CCC', value: 200, target: 0 }),
+    ];
+    expect(calculateRebalanceActions(holdings, 0)).toEqual([]);
+    expect(calculateRebalanceActions(holdings, 0.01)).toEqual([]);
+  });
+
+  it('bug-2 regression: generates transfers when deficit exceeds tolerance but excess is fragmented below tolerance', () => {
+    // One holding is 1.2 pp below target (> 1 pp tolerance) but each of the
+    // other five is only ~0.24 pp above its target (< 1 pp individually).
+    // With the old per-holding filter, excessIdx was empty → no transfers.
+    // With the portfolio-level check the deficit holder must get a transfer.
+    const _total = 10_000;
+    // Targets: A=43, B=26, C=10, D=10, E=8, F=3  (sum=100)
+    // Values tuned so F is -1.2 pp off, rest share the surplus equally:
+    //   F target = 300, F actual = 180, deviation = -120 (-1.2 pp of 10 000)
+    //   Remaining 5 holdings share +120 surplus (each ~+24)
+    const holdings = [
+      createHolding({ id: 'a', symbol: 'S1', value: 4_324, target: 43 }), // +24 above target
+      createHolding({ id: 'b', symbol: 'S2', value: 2_624, target: 26 }), // +24
+      createHolding({ id: 'c', symbol: 'S3', value: 1_024, target: 10 }), // +24
+      createHolding({ id: 'd', symbol: 'S4', value: 1_024, target: 10 }), // +24
+      createHolding({ id: 'e', symbol: 'S5', value: 824, target: 8 }), // +24
+      createHolding({ id: 'f', symbol: 'S6', value: 180, target: 3 }), // -120 (−1.2 pp)
+    ];
+    // 1 pp tolerance = 0.01
+    const transfers = calculateRebalanceActions(holdings, 0.01);
+    expect(transfers.length).toBeGreaterThan(0);
+    // The deficit holding must be the destination of at least one transfer
+    const fixesDeficit = transfers.some((t) => t.to.id === 'f');
+    expect(fixesDeficit).toBe(true);
+  });
+
+  it('returns [] when all holdings have zero value (no division-by-zero crash)', () => {
+    const holdings = [
+      createHolding({ id: 'a', symbol: 'AAA', value: 0, target: 50 }),
+      createHolding({ id: 'b', symbol: 'BBB', value: 0, target: 50 }),
+    ];
+    expect(calculateRebalanceActions(holdings, 0)).toEqual([]);
+  });
+
+  it('transfers into a holding that currently has zero value', () => {
+    const holdings = [
+      createHolding({ id: 'a', symbol: 'AAA', value: 0, target: 50 }),
+      createHolding({ id: 'b', symbol: 'BBB', value: 200, target: 50 }),
+    ];
+    const transfers = calculateRebalanceActions(holdings, 0);
+    expect(transfers.length).toBe(1);
+    expect(transfers[0].to.id).toBe('a');
+    expect(transfers[0].from.id).toBe('b');
+    expect(transfers[0].amount).toBe(100);
+  });
+
+  it('does not generate transfers when deviation equals tolerance exactly (boundary)', () => {
+    // Total = 200, tolerance = 0.05 → margin = 10.
+    // A has 110 (55%), target 50% → deviation = +10, exactly at margin.
+    // B has  90 (45%), target 50% → deviation = -10, exactly at margin.
+    // Neither exceeds the threshold, so no transfers.
+    const holdings = [
+      createHolding({ id: 'a', symbol: 'AAA', value: 110, target: 50 }),
+      createHolding({ id: 'b', symbol: 'BBB', value: 90, target: 50 }),
+    ];
+    expect(calculateRebalanceActions(holdings, 0.05)).toEqual([]);
+  });
+
+  it('returns [] when enabled targets sum to more than 100 (corrupted plan)', () => {
+    // All holdings end up in deficit (target values exceed actual total).
+    // No excess source available, so no transfers are possible.
+    const holdings = [
+      createHolding({ id: 'a', symbol: 'AAA', value: 333, target: 50 }),
+      createHolding({ id: 'b', symbol: 'BBB', value: 333, target: 50 }),
+      createHolding({ id: 'c', symbol: 'CCC', value: 334, target: 50 }),
+    ];
+    expect(calculateRebalanceActions(holdings, 0)).toEqual([]);
+  });
+
+  it('returns [] when enabled targets sum to less than 100 (corrupted plan)', () => {
+    // All holdings end up in excess (target values are below actual values).
+    // No deficit destination available, so no transfers are possible.
+    const holdings = [
+      createHolding({ id: 'a', symbol: 'AAA', value: 500, target: 20 }),
+      createHolding({ id: 'b', symbol: 'BBB', value: 500, target: 20 }),
+    ];
+    expect(calculateRebalanceActions(holdings, 0)).toEqual([]);
+  });
 });
 
 describe('simulateRebalance – defensive edge cases', () => {
