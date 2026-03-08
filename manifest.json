@@ -1,7 +1,7 @@
 {
   "id": "rebalancer",
   "name": "rebalancer",
-  "version": "0.7.3",
+  "version": "0.7.4",
   "description": "Rebalancer calculates the exact trades you need to keep your portfolio on target, on demand.",
   "author": "Ivan Balboteo",
   "main": "dist/addon.js",
