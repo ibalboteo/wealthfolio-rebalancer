@@ -78,6 +78,12 @@ pnpm test           # Vitest unit tests (54 tests)
 pnpm build          # production build
 ```
 
+### Sandbox Migration Notes (Wealthfolio 3.6.1+)
+
+- Rebalancer is migrated to the Wealthfolio 3.6.1+ sandbox architecture.
+- The addon page route and sidebar link are declared in manifest contributions.
+- Persistence uses durable `ctx.api.storage` via async storage helpers.
+
 ### Tech Stack
 
 - **Framework**: React 19 + TypeScript

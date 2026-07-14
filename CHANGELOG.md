@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Migrated to Wealthfolio 3.6.1+ sandbox architecture.
+- Route and sidebar link are declared in manifest contributions.
+- Persistence now uses durable async `ctx.api.storage`.
+
 ## [0.7.0] - 2026-03-07
 
 ### Added
