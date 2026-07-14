@@ -13,5 +13,5 @@ function Avatar({ className, ...props }: AvatarProps) {
   );
 }
 
-export { Avatar };
 export type { AvatarProps };
+export { Avatar };

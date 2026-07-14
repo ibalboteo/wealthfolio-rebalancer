@@ -38,6 +38,14 @@ function getPlanKey(accountId: string) {
   return `addons:${addonName}:account:${accountId}:plan`;
 }
 
+export const holdingPlanQueryOptions = (ctx: AddonContext, accountId: string) => ({
+  queryKey: ['holding-plan', accountId] as const,
+  queryFn: () => loadHoldingPlan(ctx, accountId),
+  enabled: !!accountId && !!ctx.api,
+  staleTime: 5 * 60 * 1000,
+  gcTime: 10 * 60 * 1000,
+});
+
 export async function loadHoldingPlan(
   ctx: AddonContext,
   accountId: string
@@ -106,12 +114,7 @@ export interface UpdateHoldingParams {
 
 export function useUpdateHolding({ accountId, ctx }: UpdateHoldingParams) {
   const queryClient = useQueryClient();
-  const { data: plan = [] } = useQuery({
-    queryKey: ['holding-plan', accountId],
-    queryFn: () => loadHoldingPlan(ctx, accountId),
-    enabled: !!accountId && !!ctx.api,
-    staleTime: 5 * 60 * 1000,
-  });
+  const { data: plan = [] } = useQuery(holdingPlanQueryOptions(ctx, accountId));
 
   const mutation = useMutation({
     mutationFn: async (plan: HoldingPlanData[]) => {

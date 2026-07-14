@@ -10,7 +10,7 @@ import {
   SheetTrigger,
 } from '@wealthfolio/ui';
 import { pascalCase } from 'change-case';
-import { Suspense, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 import { AccountSelector, ApplicationHeader, HoldingCard, HoldingPlanner } from '../components';
 import { useSuspenseHoldings } from '../hooks/use-holdings';
 import {
@@ -77,41 +77,47 @@ interface RebalancerContentProps {
 function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
   const { data: holdings } = useSuspenseHoldings({ accountId, ctx });
   const [tolerancePp, setTolerancePp] = useTolerance(ctx);
-  const rebalancePlan = useRebalance({ ctx, tolerance: tolerancePp / 100 });
-  const configurationRequired = useConfigure(ctx);
+  const rebalancePlan = useRebalance(holdings, tolerancePp / 100);
+  const configurationRequired = useConfigure(holdings);
 
   const hasHoldings = holdings.length > 0;
   const hasPlan = hasHoldings && !configurationRequired;
 
   // Holdings involved in a transfer (by id)
-  const transferIds = new Set(
-    rebalancePlan?.transfers.flatMap(({ from, to }) => [from.id, to.id]) ?? []
+  const transferIds = useMemo(
+    () => new Set(rebalancePlan?.transfers.flatMap(({ from, to }) => [from.id, to.id]) ?? []),
+    [rebalancePlan?.transfers]
   );
   const totalEnabledValue = rebalancePlan?.totalPreviewValue ?? 0;
+
   // A holding is "on target" only when it is enabled, not part of a transfer,
   // AND its actual deviation from target is within the configured tolerance.
-  // Checking the deviation directly prevents invalid persisted plan data (e.g.
-  // all targets = 0) from making every holding appear on-target.
-  const onTargetHoldings = hasPlan
-    ? holdings.filter((h) => {
-        if (!h.plan?.enabled || transferIds.has(h.id)) return false;
-        const currentPct =
-          totalEnabledValue > 0 ? (h.marketValue.base / totalEnabledValue) * 100 : 0;
-        return Math.abs(currentPct - (h.plan?.target ?? 0)) <= tolerancePp;
-      })
-    : [];
+  const onTargetHoldings = useMemo(
+    () =>
+      hasPlan
+        ? holdings.filter((h) => {
+            if (!h.plan?.enabled || transferIds.has(h.id)) return false;
+            const currentPct =
+              totalEnabledValue > 0 ? (h.marketValue.base / totalEnabledValue) * 100 : 0;
+            return Math.abs(currentPct - (h.plan?.target ?? 0)) <= tolerancePp;
+          })
+        : [],
+    [hasPlan, holdings, transferIds, totalEnabledValue, tolerancePp]
+  );
 
   // Holdings that are enabled, not in a transfer, but outside tolerance (drifted).
-  // These appear when the drift doesn't breach the lower band edge (so no transfer
-  // is generated) but the holding is still visibly off-target.
-  const driftedHoldings = hasPlan
-    ? holdings.filter((h) => {
-        if (!h.plan?.enabled || transferIds.has(h.id)) return false;
-        const currentPct =
-          totalEnabledValue > 0 ? (h.marketValue.base / totalEnabledValue) * 100 : 0;
-        return Math.abs(currentPct - (h.plan?.target ?? 0)) > tolerancePp;
-      })
-    : [];
+  const driftedHoldings = useMemo(
+    () =>
+      hasPlan
+        ? holdings.filter((h) => {
+            if (!h.plan?.enabled || transferIds.has(h.id)) return false;
+            const currentPct =
+              totalEnabledValue > 0 ? (h.marketValue.base / totalEnabledValue) * 100 : 0;
+            return Math.abs(currentPct - (h.plan?.target ?? 0)) > tolerancePp;
+          })
+        : [],
+    [hasPlan, holdings, transferIds, totalEnabledValue, tolerancePp]
+  );
 
   if (!hasHoldings) {
     return (

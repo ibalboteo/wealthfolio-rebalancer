@@ -1,7 +1,7 @@
 import type { AddonContext } from '@wealthfolio/addon-sdk';
 import { Button, cn, Icons, Input, Switch } from '@wealthfolio/ui';
 import type { FormEvent } from 'react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { type HoldingPlanData, useHoldings, useUpdateHolding } from '../hooks';
 import { useSelectedAccount } from '../lib/account-provider';
 import { TickerAvatar } from './ticker-avatar';
@@ -25,11 +25,19 @@ export function HoldingPlanner({ ctx, onSave }: HoldingPlannerProps) {
     ctx,
   });
 
-  const [formState, setFormState] = useState<HoldingPlanData[]>([]);
+  const [formState, setFormState] = useState<HoldingPlanData[]>(() =>
+    (holdings ?? []).map((h) => ({
+      id: h.id,
+      target: h.plan.target,
+      enabled: h.plan.enabled,
+    }))
+  );
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [prevHoldings, setPrevHoldings] = useState(holdings);
 
-  // Actualiza el estado local cuando cambian los holdings
-  useEffect(() => {
+  // Adjust state during render when holdings change (avoids extra render from useEffect)
+  if (holdings !== prevHoldings) {
+    setPrevHoldings(holdings);
     setFormState(
       (holdings ?? []).map((h) => ({
         id: h.id,
@@ -38,7 +46,7 @@ export function HoldingPlanner({ ctx, onSave }: HoldingPlannerProps) {
       }))
     );
     setValidationError(null);
-  }, [holdings]);
+  }
 
   // Submit handler
   const handleSubmit = (e: FormEvent) => {

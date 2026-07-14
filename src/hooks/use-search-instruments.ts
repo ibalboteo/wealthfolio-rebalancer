@@ -11,10 +11,6 @@ export function useSearchInstruments({ query, ctx, enabled = true }: UseSearchIn
   return useQuery<SymbolSearchResult[]>({
     queryKey: ['search-instruments', query],
     queryFn: async () => {
-      if (!ctx.api || !query.trim()) {
-        return [];
-      }
-
       const results = await ctx.api.market.searchTicker(query.trim());
       return results || [];
     },

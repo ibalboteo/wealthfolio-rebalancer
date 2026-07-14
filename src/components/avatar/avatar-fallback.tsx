@@ -16,5 +16,5 @@ function AvatarFallback({ className, ...props }: AvatarFallbackProps) {
   );
 }
 
-export { AvatarFallback };
 export type { AvatarFallbackProps };
+export { AvatarFallback };

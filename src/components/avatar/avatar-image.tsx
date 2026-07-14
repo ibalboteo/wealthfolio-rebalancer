@@ -10,5 +10,5 @@ function AvatarImage({ className, ...props }: AvatarImageProps) {
   );
 }
 
-export { AvatarImage };
 export type { AvatarImageProps };
+export { AvatarImage };

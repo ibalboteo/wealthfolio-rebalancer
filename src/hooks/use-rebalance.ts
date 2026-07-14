@@ -1,14 +1,8 @@
-import { useQuery } from '@tanstack/react-query';
 import type { AddonContext } from '@wealthfolio/addon-sdk';
 import { useMemo } from 'react';
 import type { RebalanceAction } from '../lib';
-import {
-  addonName,
-  calculateRebalanceActions,
-  simulateRebalance,
-  useSelectedAccount,
-} from '../lib';
-import { loadHoldingPlan, type PlannedHolding, useHoldings } from './use-holdings';
+import { addonName, calculateRebalanceActions, simulateRebalance } from '../lib';
+import type { PlannedHolding } from './use-holdings';
 import { useAddonStorageState } from './use-local-storage';
 
 // ─── Tolerance ──────────────────────────────────────────────────────────────
@@ -44,7 +38,7 @@ export function useTolerance(ctx: AddonContext): [number, (pp: number) => void] 
   return [tolerancePp, setTolerancePp];
 }
 
-export { TOLERANCE_MIN, TOLERANCE_MAX, TOLERANCE_STEP };
+export { TOLERANCE_MAX, TOLERANCE_MIN, TOLERANCE_STEP };
 
 export interface RebalancePlan {
   transfers: RebalanceAction[];
@@ -52,22 +46,14 @@ export interface RebalancePlan {
   totalPreviewValue: number;
 }
 
-export interface UseRebalanceOptions {
-  ctx: AddonContext;
-  tolerance?: number;
-  enabled?: boolean;
-}
-
-export function useRebalance({
-  ctx,
-  tolerance = 0,
-}: UseRebalanceOptions): RebalancePlan | undefined {
-  const { selectedAccount } = useSelectedAccount();
-  const { data: holdings } = useHoldings({
-    accountId: selectedAccount?.id || '',
-    ctx,
-  });
-
+/**
+ * Pure computation hook: derives the rebalance plan from holdings and tolerance.
+ * Holdings must be provided by the caller (e.g. from useSuspenseHoldings).
+ */
+export function useRebalance(
+  holdings: PlannedHolding[] | undefined,
+  tolerance = 0
+): RebalancePlan | undefined {
   return useMemo(() => {
     const transfers = calculateRebalanceActions(holdings, tolerance);
     const previewHoldings = simulateRebalance(holdings, transfers);
@@ -84,26 +70,12 @@ export function useRebalance({
   }, [holdings, tolerance]);
 }
 
-export function useConfigure(ctx: AddonContext): boolean {
-  const { selectedAccount } = useSelectedAccount();
-  const accountId = selectedAccount?.id ?? '__none__';
-
-  const { data: savedPlan, isLoading } = useQuery({
-    queryKey: ['holding-plan', accountId],
-    queryFn: () => loadHoldingPlan(ctx, accountId),
-    enabled: accountId !== '__none__' && !!ctx.api,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  if (accountId === '__none__') {
-    return true;
-  }
-
-  if (isLoading) {
-    // During loading, treat configuration as required to avoid
-    // showing the "plan corrupted" state with stale/default data.
-    return true;
-  }
-
-  return !savedPlan || savedPlan.length === 0;
+/**
+ * Pure function: determines whether a plan needs configuration based on
+ * the enriched holdings data. A plan is "unconfigured" when no holding
+ * has a non-default plan entry (i.e. all targets are 0 and all are enabled).
+ */
+export function useConfigure(holdings: PlannedHolding[] | undefined): boolean {
+  if (!holdings || holdings.length === 0) return true;
+  return holdings.every((h) => h.plan.target === 0 && h.plan.enabled === true);
 }

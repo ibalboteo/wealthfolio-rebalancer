@@ -1,59 +1,56 @@
 // @vitest-environment jsdom
-import type { AddonContext } from '@wealthfolio/addon-sdk';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import type { PlannedHolding } from './use-holdings';
 import { useConfigure } from './use-rebalance';
 
-const useSelectedAccountMock = vi.fn();
-const useQueryMock = vi.fn();
-
-vi.mock('../lib', async () => {
-  const actual = await vi.importActual<typeof import('../lib')>('../lib');
+function makePlannedHolding(
+  overrides: Partial<PlannedHolding> & { plan: PlannedHolding['plan'] }
+): PlannedHolding {
   return {
-    ...actual,
-    useSelectedAccount: () => useSelectedAccountMock(),
-  };
-});
-
-vi.mock('@tanstack/react-query', async () => {
-  const actual =
-    await vi.importActual<typeof import('@tanstack/react-query')>('@tanstack/react-query');
-  return {
-    ...actual,
-    useQuery: (...args: unknown[]) => useQueryMock(...args),
-  };
-});
+    id: overrides.id ?? 'h1',
+    accountId: 'acc-1',
+    holdingType: 'equity',
+    baseCurrency: 'USD',
+    localCurrency: 'USD',
+    quantity: 10,
+    asOfDate: '2026-01-01',
+    marketValue: { base: 1000, ...overrides.marketValue },
+    weight: 0,
+    instrument: null,
+    plan: overrides.plan,
+  } as unknown as PlannedHolding;
+}
 
 describe('useConfigure', () => {
-  const ctx = { api: {} } as unknown as AddonContext;
-
-  it('returns true when no account is selected', () => {
-    useSelectedAccountMock.mockReturnValue({ selectedAccount: null });
-    useQueryMock.mockReturnValue({ data: undefined, isLoading: false });
-
-    expect(useConfigure(ctx)).toBe(true);
+  it('returns true when holdings is undefined', () => {
+    expect(useConfigure(undefined)).toBe(true);
   });
 
-  it('returns true while query is still loading', () => {
-    useSelectedAccountMock.mockReturnValue({ selectedAccount: { id: 'acc-1' } });
-    useQueryMock.mockReturnValue({ data: undefined, isLoading: true });
-
-    expect(useConfigure(ctx)).toBe(true);
+  it('returns true when holdings is empty', () => {
+    expect(useConfigure([])).toBe(true);
   });
 
-  it('returns true when plan is empty', () => {
-    useSelectedAccountMock.mockReturnValue({ selectedAccount: { id: 'acc-1' } });
-    useQueryMock.mockReturnValue({ data: [], isLoading: false });
-
-    expect(useConfigure(ctx)).toBe(true);
+  it('returns true when all holdings have default plan (target=0, enabled=true)', () => {
+    const holdings = [
+      makePlannedHolding({ id: 'h1', plan: { id: 'h1', target: 0, enabled: true } }),
+      makePlannedHolding({ id: 'h2', plan: { id: 'h2', target: 0, enabled: true } }),
+    ];
+    expect(useConfigure(holdings)).toBe(true);
   });
 
-  it('returns false when plan has entries', () => {
-    useSelectedAccountMock.mockReturnValue({ selectedAccount: { id: 'acc-1' } });
-    useQueryMock.mockReturnValue({
-      data: [{ id: 'h1', target: 100, enabled: true }],
-      isLoading: false,
-    });
+  it('returns false when plan has non-zero targets', () => {
+    const holdings = [
+      makePlannedHolding({ id: 'h1', plan: { id: 'h1', target: 60, enabled: true } }),
+      makePlannedHolding({ id: 'h2', plan: { id: 'h2', target: 40, enabled: true } }),
+    ];
+    expect(useConfigure(holdings)).toBe(false);
+  });
 
-    expect(useConfigure(ctx)).toBe(false);
+  it('returns false when a holding has enabled=false', () => {
+    const holdings = [
+      makePlannedHolding({ id: 'h1', plan: { id: 'h1', target: 0, enabled: false } }),
+      makePlannedHolding({ id: 'h2', plan: { id: 'h2', target: 0, enabled: true } }),
+    ];
+    expect(useConfigure(holdings)).toBe(false);
   });
 });
