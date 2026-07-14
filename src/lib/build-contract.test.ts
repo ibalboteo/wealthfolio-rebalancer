@@ -27,8 +27,8 @@ describe('build contract', () => {
   });
 
   it('aligns addon sdk and ui dependency versions to 3.6.x', () => {
-    expect(pkg.dependencies['@wealthfolio/addon-sdk']).toBe('^3.6.0');
-    expect(pkg.dependencies['@wealthfolio/ui']).toBe('^3.6.0');
+    expect(pkg.dependencies['@wealthfolio/addon-sdk']).toBe('^3.6.2');
+    expect(pkg.dependencies['@wealthfolio/ui']).toBe('^3.6.2');
   });
 
   it('declares hostDependencies required by the host runtime', () => {
