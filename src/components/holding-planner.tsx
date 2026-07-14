@@ -22,6 +22,7 @@ export function HoldingPlanner({ ctx, onSave }: HoldingPlannerProps) {
 
   const { mutation } = useUpdateHolding({
     accountId,
+    ctx,
   });
 
   const [formState, setFormState] = useState<HoldingPlanData[]>([]);

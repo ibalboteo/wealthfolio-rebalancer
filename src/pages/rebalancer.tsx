@@ -173,9 +173,9 @@ interface RebalancerContentProps {
 
 function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
   const { data: holdings } = useSuspenseHoldings({ accountId, ctx });
-  const [tolerancePp, setTolerancePp] = useTolerance();
+  const [tolerancePp, setTolerancePp] = useTolerance(ctx);
   const rebalancePlan = useRebalance({ ctx, tolerance: tolerancePp / 100 });
-  const configurationRequired = useConfigure();
+  const configurationRequired = useConfigure(ctx);
 
   const hasHoldings = holdings.length > 0;
   const hasPlan = hasHoldings && !configurationRequired;
@@ -187,7 +187,7 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
   const totalEnabledValue = rebalancePlan?.totalPreviewValue ?? 0;
   // A holding is "on target" only when it is enabled, not part of a transfer,
   // AND its actual deviation from target is within the configured tolerance.
-  // Checking the deviation directly prevents invalid localStorage data (e.g.
+  // Checking the deviation directly prevents invalid persisted plan data (e.g.
   // all targets = 0) from making every holding appear on-target.
   const onTargetHoldings = hasPlan
     ? holdings.filter((h) => {

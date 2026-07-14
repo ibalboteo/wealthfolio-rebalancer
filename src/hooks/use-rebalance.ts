@@ -13,7 +13,7 @@ import {
   type PlannedHolding,
   useHoldings,
 } from './use-holdings';
-import { useLocalStorage } from './use-local-storage';
+import { useAddonStorageState } from './use-local-storage';
 
 // ─── Tolerance ──────────────────────────────────────────────────────────────
 
@@ -31,8 +31,13 @@ function isValidTolerancePp(v: unknown): v is number {
  * Holdings that deviate from target by less than this amount are skipped.
  * Range: 0–20 pp.  Default: 0 (any deviation triggers a transfer).
  */
-export function useTolerance(): [number, (pp: number) => void] {
-  const [tolerancePp, setRaw] = useLocalStorage<number>(TOLERANCE_KEY, 0, isValidTolerancePp);
+export function useTolerance(ctx: AddonContext): [number, (pp: number) => void] {
+  const [tolerancePp, setRaw] = useAddonStorageState<number>(
+    ctx,
+    TOLERANCE_KEY,
+    0,
+    isValidTolerancePp
+  );
 
   const setTolerancePp = (pp: number) => {
     // Round to nearest step to avoid floating-point drift
@@ -83,12 +88,13 @@ export function useRebalance({
   }, [holdings, tolerance]);
 }
 
-export function useConfigure(): boolean {
+export function useConfigure(ctx: AddonContext): boolean {
   const { selectedAccount } = useSelectedAccount();
   const accountId = selectedAccount?.id ?? '__none__';
 
   // The stored value is HoldingPlanData[], not PlannedHolding[]
-  const [savedPlan] = useLocalStorage<HoldingPlanData[]>(
+  const [savedPlan, , hydrated] = useAddonStorageState<HoldingPlanData[]>(
+    ctx,
     `addons:${addonName}:account:${accountId}:plan`,
     [],
     isHoldingPlanDataArray
@@ -96,6 +102,10 @@ export function useConfigure(): boolean {
 
   if (accountId === '__none__') {
     return true;
+  }
+
+  if (!hydrated) {
+    return false;
   }
 
   return savedPlan.length === 0;

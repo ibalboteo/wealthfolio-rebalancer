@@ -10,7 +10,7 @@ const RebalancerWrapper = ({ ctx }: { ctx: AddonContext }) => {
 
   return (
     <QueryClientProvider client={sharedQueryClient}>
-      <SelectedAccountProvider>
+      <SelectedAccountProvider ctx={ctx}>
         <Rebalancer ctx={ctx} />
         <Toaster />
       </SelectedAccountProvider>
