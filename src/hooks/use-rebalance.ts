@@ -50,6 +50,8 @@ export function useTolerance(ctx: AddonContext): [number, (pp: number) => void] 
 
 export { TOLERANCE_MIN, TOLERANCE_MAX, TOLERANCE_STEP };
 
+const EMPTY_HOLDING_PLAN: HoldingPlanData[] = [];
+
 export interface RebalancePlan {
   transfers: RebalanceAction[];
   previewHoldings: PlannedHolding[];
@@ -96,7 +98,7 @@ export function useConfigure(ctx: AddonContext): boolean {
   const [savedPlan, , hydrated] = useAddonStorageState<HoldingPlanData[]>(
     ctx,
     `addons:${addonName}:account:${accountId}:plan`,
-    [],
+    EMPTY_HOLDING_PLAN,
     isHoldingPlanDataArray
   );
 

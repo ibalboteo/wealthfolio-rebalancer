@@ -20,6 +20,9 @@ export function useAddonStorageState<T>(
   useEffect(() => {
     let active = true;
 
+    setHydrated(false);
+    setValue(defaultValue);
+
     const hydrate = async () => {
       const nextValue = await readAddonStorage(
         ctx,
@@ -37,7 +40,7 @@ export function useAddonStorageState<T>(
     return () => {
       active = false;
     };
-  }, [ctx, key]);
+  }, [ctx, defaultValue, key, validator]);
 
   const setStoredValue = useCallback(
     (newValue: T | ((prev: T) => T)) => {
