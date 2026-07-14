@@ -2,12 +2,42 @@ import type { AddonContext } from '@wealthfolio/addon-sdk';
 
 export type Validator<T> = (value: unknown) => value is T;
 
-export function readStorage<T>(_key: string, fallback: T, _validator?: Validator<T>): T {
-  return fallback;
+function isBrowser() {
+  return typeof window !== 'undefined';
 }
 
-export function writeStorage<T>(_key: string, _value: T): void {
-  // Legacy compatibility shim. Durable storage now uses async addon APIs.
+export function readStorage<T>(key: string, fallback: T, validator?: Validator<T>): T {
+  if (!isBrowser()) return fallback;
+
+  try {
+    const rawValue = window.localStorage.getItem(key);
+    if (rawValue === null) return fallback;
+
+    const parsedValue = JSON.parse(rawValue) as unknown;
+    if (validator && !validator(parsedValue)) return fallback;
+
+    return parsedValue as T;
+  } catch {
+    return fallback;
+  }
+}
+
+export function writeStorage<T>(key: string, value: T): void {
+  if (!isBrowser()) return;
+
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+    // Defer the event so React doesn't see a state update in another component
+    // during the current render/commit cycle (avoids the "Cannot update a component
+    // while rendering a different component" warning).
+    queueMicrotask(() => {
+      if (typeof window?.dispatchEvent === 'function') {
+        window.dispatchEvent(new CustomEvent('local-storage-write', { detail: { key } }));
+      }
+    });
+  } catch {
+    // Ignore persistence errors to keep UI stable
+  }
 }
 
 export async function readAddonStorage<T>(
