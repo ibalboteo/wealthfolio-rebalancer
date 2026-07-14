@@ -4,7 +4,7 @@ import { Icons } from '@wealthfolio/ui';
 import { pascalCase } from 'change-case';
 import { lazy } from 'react';
 import { Toaster } from './components/toaster';
-import { addonName } from './lib';
+import { addonMainRouteId, addonName } from './lib';
 import { SelectedAccountProvider } from './lib/account-provider';
 import { Rebalancer } from './pages/rebalancer';
 
@@ -34,9 +34,10 @@ export default function enable(ctx: AddonContext) {
 
   // Add a route
   ctx.router.add({
+    id: addonMainRouteId,
     path: `/addon/${addonName}`,
     component: lazy(() => Promise.resolve({ default: RebalancerWrapper })),
-  });
+  } as Parameters<typeof ctx.router.add>[0]);
 
   // Cleanup on disable
   ctx.onDisable(() => {
