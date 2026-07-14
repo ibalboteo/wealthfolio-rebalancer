@@ -107,7 +107,9 @@ export function useConfigure(ctx: AddonContext): boolean {
   }
 
   if (!hydrated) {
-    return false;
+    // During async hydration, treat configuration as required to avoid
+    // showing the "plan corrupted" state with stale/default data.
+    return true;
   }
 
   return savedPlan.length === 0;
