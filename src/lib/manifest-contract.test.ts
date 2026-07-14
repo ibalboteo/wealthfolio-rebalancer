@@ -11,4 +11,11 @@ describe('manifest contract', () => {
       expect.arrayContaining([expect.objectContaining({ route: 'main' })])
     );
   });
+
+  it('uses the same route id in runtime and manifest', async () => {
+    const { addonMainRouteId } = await import('./constants');
+    const routes = manifest.contributes.routes as Array<{ id: string }>;
+
+    expect(routes.some((route) => route.id === addonMainRouteId)).toBe(true);
+  });
 });
