@@ -10,8 +10,10 @@ import {
   SheetTrigger,
 } from '@wealthfolio/ui';
 import { pascalCase } from 'change-case';
+import { domAnimation, LazyMotion, m, useReducedMotion } from 'framer-motion';
 import { Suspense, useMemo, useState } from 'react';
 import { AccountSelector, ApplicationHeader, HoldingCard, HoldingPlanner } from '../components';
+import { HoldingCardSkeleton } from '../components/transfer-card';
 import { useSuspenseHoldings } from '../hooks/use-holdings';
 import {
   TOLERANCE_MAX,
@@ -61,10 +63,17 @@ export function EditPlanSheet({ ctx, label = 'Edit Plan', compact = false }: Edi
   );
 }
 
-function LoadingSpinner() {
+function LoadingSkeleton() {
   return (
-    <div className="flex items-center justify-center flex-1 min-h-0">
-      <Icons.Loader className="h-6 w-6 animate-spin text-muted-foreground" />
+    <div className="flex-1 overflow-y-auto">
+      <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-fr">
+        {Array.from({ length: 6 }, (_, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: static placeholder list
+          <li key={i}>
+            <HoldingCardSkeleton />
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -79,6 +88,7 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
   const [tolerancePp, setTolerancePp] = useTolerance(ctx);
   const rebalancePlan = useRebalance(holdings, tolerancePp / 100);
   const configurationRequired = useConfigure(holdings);
+  const prefersReducedMotion = useReducedMotion();
 
   const hasHoldings = holdings.length > 0;
   const hasPlan = hasHoldings && !configurationRequired;
@@ -210,34 +220,65 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
         </div>
       )}
       <div className="flex-1 overflow-y-auto">
-        <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-fr">
-          {rebalancePlan?.transfers.map(({ from, to, amount, currency }) => (
-            <HoldingCard
-              key={`${from.id}-${to.id}`}
-              status="transfer"
-              from={from}
-              to={to}
-              amount={amount}
-              currency={currency}
-            />
-          ))}
-          {driftedHoldings.map((h) => (
-            <HoldingCard
-              key={h.id}
-              status="drifted"
-              holding={h}
-              totalPortfolioValue={rebalancePlan?.totalPreviewValue ?? 0}
-            />
-          ))}
-          {onTargetHoldings.map((h) => (
-            <HoldingCard
-              key={h.id}
-              status="on-target"
-              holding={h}
-              totalPortfolioValue={rebalancePlan?.totalPreviewValue ?? 0}
-            />
-          ))}
-        </ul>
+        <LazyMotion features={domAnimation}>
+          <m.ul
+            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-fr"
+            initial="hidden"
+            animate="show"
+            variants={{
+              hidden: {},
+              show: { transition: { staggerChildren: prefersReducedMotion ? 0 : 0.04 } },
+            }}
+          >
+            {rebalancePlan?.transfers.map(({ from, to, amount, currency }) => (
+              <m.li
+                key={`${from.id}-${to.id}`}
+                variants={{
+                  hidden: { opacity: 0, y: prefersReducedMotion ? 0 : 8 },
+                  show: { opacity: 1, y: 0 },
+                }}
+              >
+                <HoldingCard
+                  status="transfer"
+                  from={from}
+                  to={to}
+                  amount={amount}
+                  currency={currency}
+                />
+              </m.li>
+            ))}
+            {driftedHoldings.map((h) => (
+              <m.li
+                key={h.id}
+                variants={{
+                  hidden: { opacity: 0, y: prefersReducedMotion ? 0 : 8 },
+                  show: { opacity: 1, y: 0 },
+                }}
+              >
+                <HoldingCard
+                  status="drifted"
+                  holding={h}
+                  totalPortfolioValue={rebalancePlan?.totalPreviewValue ?? 0}
+                />
+              </m.li>
+            ))}
+            {onTargetHoldings.map((h) => (
+              <m.li
+                key={h.id}
+                variants={{
+                  hidden: { opacity: 0, y: prefersReducedMotion ? 0 : 8 },
+                  show: { opacity: 1, y: 0 },
+                }}
+              >
+                <HoldingCard
+                  status="on-target"
+                  holding={h}
+                  totalPortfolioValue={rebalancePlan?.totalPreviewValue ?? 0}
+                />
+              </m.li>
+            ))}
+          </m.ul>
+        </LazyMotion>
       </div>
     </>
   );
@@ -263,7 +304,7 @@ export function Rebalancer({ ctx }: { ctx: AddonContext }) {
           </p>
         </div>
       ) : (
-        <Suspense fallback={<LoadingSpinner />}>
+        <Suspense fallback={<LoadingSkeleton />}>
           <RebalancerContent ctx={ctx} accountId={selectedAccount.id} />
         </Suspense>
       )}

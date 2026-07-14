@@ -51,12 +51,8 @@ export function HoldingPlanner({ ctx, onSave }: HoldingPlannerProps) {
   // Submit handler
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    const enabledTotal = formState
-      .filter((item) => item.enabled)
-      .reduce((sum, item) => sum + item.target, 0);
-    const rounded = Math.round(enabledTotal * 100) / 100;
-    if (rounded !== 100) {
-      setValidationError(`Enabled targets sum to ${rounded.toFixed(2)}%, must equal 100%`);
+    if (!isBalanced) {
+      setValidationError(`Enabled targets sum to ${roundedTotal.toFixed(2)}%, must equal 100%`);
       return;
     }
     setValidationError(null);
@@ -78,6 +74,14 @@ export function HoldingPlanner({ ctx, onSave }: HoldingPlannerProps) {
     );
     setValidationError(null);
   };
+
+  // Live total of enabled targets, so the user sees progress toward 100%
+  // without having to submit first.
+  const enabledTotal = formState
+    .filter((item) => item.enabled)
+    .reduce((sum, item) => sum + (item.target || 0), 0);
+  const roundedTotal = Math.round(enabledTotal * 100) / 100;
+  const isBalanced = roundedTotal === 100;
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col h-full">
@@ -114,6 +118,7 @@ export function HoldingPlanner({ ctx, onSave }: HoldingPlannerProps) {
                 min={0}
                 max={100}
                 step={0.01}
+                aria-label={`Target allocation for ${holding.instrument?.symbol || holding.holdingType}`}
                 onChange={(e) => handleChange(idx, 'target', parseFloat(e.target.value))}
                 className={cn('w-24 text-right', {
                   'bg-muted/40 text-muted-foreground': !formState[idx]?.enabled,
@@ -123,6 +128,7 @@ export function HoldingPlanner({ ctx, onSave }: HoldingPlannerProps) {
             </fieldset>
             <Switch
               checked={formState[idx]?.enabled ?? false}
+              aria-label={`Enable ${holding.instrument?.symbol || holding.holdingType} in the plan`}
               onCheckedChange={(checked) => handleChange(idx, 'enabled', checked)}
             />
           </div>
@@ -135,9 +141,18 @@ export function HoldingPlanner({ ctx, onSave }: HoldingPlannerProps) {
             {validationError}
           </p>
         ) : (
-          <span />
+          <p className="flex items-center gap-1.5 text-sm tabular-nums" aria-live="polite">
+            {isBalanced ? (
+              <Icons.CheckCircle className="h-4 w-4 shrink-0 text-success" />
+            ) : (
+              <Icons.AlertCircle className="h-4 w-4 shrink-0 text-muted-foreground" />
+            )}
+            <span className={cn(isBalanced ? 'text-success' : 'text-muted-foreground')}>
+              {roundedTotal.toFixed(2)} / 100%
+            </span>
+          </p>
         )}
-        <Button type="submit" disabled={mutation.isPending}>
+        <Button type="submit" disabled={mutation.isPending || !isBalanced}>
           {mutation.isPending ? <Icons.Loader className="h-4 w-4 animate-spin mr-2" /> : null}
           Save
         </Button>

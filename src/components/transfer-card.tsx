@@ -1,4 +1,4 @@
-import { AmountDisplay, Card, Icons } from '@wealthfolio/ui';
+import { AmountDisplay, Card, cn, Icons, Skeleton } from '@wealthfolio/ui';
 import type { PlannedHolding } from '../hooks/use-holdings';
 import type { RebalanceAction } from '../lib';
 import { TickerAvatar } from './ticker-avatar';
@@ -9,6 +9,29 @@ const cardVariants = {
   'on-target': 'border-success/20 bg-success/5',
   drifted: 'border-warning/20 bg-warning/5',
 } as const;
+
+/** Placeholder card that mirrors HoldingCard's layout to avoid layout shift while loading. */
+export function HoldingCardSkeleton() {
+  return (
+    <Card className={cn(cardBase, cardVariants.transfer)}>
+      <div className="flex items-center gap-4">
+        <Skeleton className="w-12 h-12 flex-none rounded-full" />
+        <Skeleton className="h-4 w-32" />
+      </div>
+      <div className="flex items-center gap-4 flex-1">
+        <div className="w-12 flex-none" />
+        <Skeleton className="h-6 w-24" />
+      </div>
+      <div className="flex items-center gap-4 h-12">
+        <Skeleton className="w-5 h-5 flex-none rounded-full ml-3.5" />
+        <div className="flex flex-col gap-1.5">
+          <Skeleton className="h-3.5 w-20" />
+          <Skeleton className="h-3 w-28" />
+        </div>
+      </div>
+    </Card>
+  );
+}
 
 type TransferCardProps = RebalanceAction & {
   status: 'transfer';
@@ -29,7 +52,7 @@ type DriftedCardProps = {
 type HoldingCardProps = TransferCardProps | OnTargetCardProps | DriftedCardProps;
 
 export function HoldingCard(props: HoldingCardProps) {
-  const className = `${cardBase} ${cardVariants[props.status]}`;
+  const className = cn(cardBase, cardVariants[props.status]);
 
   if (props.status === 'on-target') {
     const { holding, totalPortfolioValue } = props;
@@ -62,10 +85,10 @@ export function HoldingCard(props: HoldingCardProps) {
 
         <div className="flex items-center gap-4 h-12">
           <div className="w-12 flex-none flex justify-center">
-            <Icons.CheckCircle className="w-5 h-5 text-green-500" />
+            <Icons.CheckCircle className="w-5 h-5 text-success" />
           </div>
           <div className="flex flex-col">
-            <span className="text-sm font-semibold text-green-500">On target</span>
+            <span className="text-sm font-semibold text-success">On target</span>
             <span className="text-xs text-muted-foreground tabular-nums">
               {currentPct.toFixed(1)}% ({deviationLabel})
             </span>
@@ -106,10 +129,10 @@ export function HoldingCard(props: HoldingCardProps) {
 
         <div className="flex items-center gap-4 h-12">
           <div className="w-12 flex-none flex justify-center">
-            <Icons.AlertCircle className="w-5 h-5 text-yellow-500" />
+            <Icons.AlertCircle className="w-5 h-5 text-warning" />
           </div>
           <div className="flex flex-col">
-            <span className="text-sm font-semibold text-yellow-500">Drifted</span>
+            <span className="text-sm font-semibold text-warning">Drifted</span>
             <span className="text-xs text-muted-foreground tabular-nums">
               {currentPct.toFixed(1)}% ({deviationLabel}) · target {targetPct.toFixed(1)}%
             </span>
@@ -141,7 +164,10 @@ export function HoldingCard(props: HoldingCardProps) {
         </div>
         <div className="flex items-baseline gap-2">
           <AmountDisplay value={amount} currency={currency} className="text-xl font-bold" />
-          <span className="text-sm font-medium text-muted-foreground tabular-nums">
+          <span
+            className="text-sm font-medium text-muted-foreground tabular-nums"
+            title="Share of the source holding being transferred"
+          >
             {transferPct.toFixed(1)}%
           </span>
         </div>

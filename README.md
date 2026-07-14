@@ -105,7 +105,6 @@ src/
     holding-planner.tsx      # plan editor with inline validation
     transfer-card.tsx        # individual transfer card with ContributionLine
     account-selector.tsx
-    instrument-selector.tsx
     ticker-avatar.tsx
   hooks/
     use-holdings.ts          # useHoldings / useSuspenseHoldings + plan merge
