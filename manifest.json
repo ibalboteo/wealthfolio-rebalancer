@@ -5,7 +5,26 @@
   "description": "Rebalancer calculates the exact trades you need to keep your portfolio on target, on demand.",
   "author": "Ivan Balboteo",
   "main": "dist/addon.js",
-  "sdkVersion": "3.0.0",
+  "sdkVersion": "3.6.0",
+  "minWealthfolioVersion": "3.6.0",
+  "contributes": {
+    "routes": [
+      {
+        "id": "main"
+      }
+    ],
+    "links": {
+      "sidebar": [
+        {
+          "id": "main-nav",
+          "route": "main",
+          "label": "Rebalancer",
+          "icon": "scales",
+          "order": 100
+        }
+      ]
+    }
+  },
   "enabled": true,
   "permissions": [
     {
