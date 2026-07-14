@@ -1,101 +1,122 @@
-import { beforeEach, describe, expect, it } from 'vitest';
-import { isRecord, readStorage, writeStorage } from './storage';
+import type { AddonContext } from '@wealthfolio/addon-sdk';
+import { describe, expect, it, vi } from 'vitest';
+import { deleteAddonStorage, isRecord, readAddonStorage, writeAddonStorage } from './storage';
 
-type StorageLike = {
-  getItem: (key: string) => string | null;
-  setItem: (key: string, value: string) => void;
+type StorageApi = {
+  get: (key: string) => Promise<string | null>;
+  set: (key: string, value: string) => Promise<void>;
+  delete: (key: string) => Promise<void>;
 };
 
-function createMockStorage(seed: Record<string, string> = {}): StorageLike {
-  const map = new Map(Object.entries(seed));
-
+function createCtx(storage: Partial<StorageApi>) {
   return {
-    getItem: (key: string) => map.get(key) ?? null,
-    setItem: (key: string, value: string) => {
-      map.set(key, value);
+    api: {
+      storage: {
+        get: storage.get ?? (async () => null),
+        set: storage.set ?? (async () => undefined),
+        delete: storage.delete ?? (async () => undefined),
+      },
     },
-  };
-}
-
-function setMockWindow(storage: StorageLike) {
-  Object.defineProperty(globalThis, 'window', {
-    configurable: true,
-    writable: true,
-    value: {
-      localStorage: storage,
-    },
-  });
+  } as unknown as AddonContext;
 }
 
 describe('storage', () => {
-  beforeEach(() => {
-    Object.defineProperty(globalThis, 'window', {
-      configurable: true,
-      writable: true,
-      value: undefined,
+  it('reads from ctx.api.storage asynchronously', async () => {
+    const ctx = createCtx({
+      get: async () => '[1,2]',
     });
+
+    const value = await readAddonStorage<number[]>(ctx, 'k', []);
+    expect(value).toEqual([1, 2]);
   });
 
-  it('returns fallback when window is unavailable', () => {
-    const result = readStorage('missing', [] as number[]);
+  it('returns fallback when key is missing', async () => {
+    const ctx = createCtx({
+      get: async () => null,
+    });
+
+    const result = await readAddonStorage(ctx, 'missing', [] as number[]);
     expect(result).toEqual([]);
   });
 
-  it('returns fallback when value is invalid json', () => {
-    setMockWindow(createMockStorage({ key: '{bad-json' }));
+  it('returns fallback when value is invalid json', async () => {
+    const ctx = createCtx({
+      get: async () => '{bad-json',
+    });
 
-    const result = readStorage('key', ['fallback']);
+    const result = await readAddonStorage(ctx, 'key', ['fallback']);
     expect(result).toEqual(['fallback']);
   });
 
-  it('returns fallback when validator fails', () => {
-    setMockWindow(createMockStorage({ key: JSON.stringify({ value: 123 }) }));
+  it('returns fallback when validator fails', async () => {
+    const ctx = createCtx({
+      get: async () => JSON.stringify({ value: 123 }),
+    });
 
-    const result = readStorage<string[]>('key', [], (value): value is string[] => {
+    const result = await readAddonStorage<string[]>(ctx, 'key', [], (value): value is string[] => {
       return Array.isArray(value) && value.every((item) => typeof item === 'string');
     });
 
     expect(result).toEqual([]);
   });
 
-  it('returns stored value when validator passes', () => {
-    setMockWindow(createMockStorage({ key: JSON.stringify(['AAPL', 'MSFT']) }));
+  it('returns stored value when validator passes', async () => {
+    const ctx = createCtx({
+      get: async () => JSON.stringify(['AAPL', 'MSFT']),
+    });
 
-    const result = readStorage<string[]>('key', [], (value): value is string[] => {
+    const result = await readAddonStorage<string[]>(ctx, 'key', [], (value): value is string[] => {
       return Array.isArray(value) && value.every((item) => typeof item === 'string');
     });
 
     expect(result).toEqual(['AAPL', 'MSFT']);
   });
 
-  it('writes json value to storage', () => {
-    const storage = createMockStorage();
-    setMockWindow(storage);
+  it('writes to ctx.api.storage asynchronously', async () => {
+    const set = vi.fn(async () => undefined);
+    const ctx = createCtx({ set });
 
-    writeStorage('plan', [{ id: '1', target: 50 }]);
-
-    expect(storage.getItem('plan')).toBe('[{"id":"1","target":50}]');
+    await writeAddonStorage(ctx, 'k', { a: 1 });
+    expect(set).toHaveBeenCalledWith('k', JSON.stringify({ a: 1 }));
   });
 
-  it('write is a no-op when window is unavailable', () => {
-    // window is undefined (set in beforeEach) — should not throw
-    expect(() => writeStorage('key', { value: 42 })).not.toThrow();
+  it('swallows async write errors', async () => {
+    const ctx = createCtx({
+      set: async () => {
+        throw new Error('set failed');
+      },
+    });
+
+    await expect(writeAddonStorage(ctx, 'k', { value: 42 })).resolves.toBeUndefined();
   });
 
-  it('silently ignores a storage write error (e.g. QuotaExceededError)', () => {
-    const storage = createMockStorage();
-    storage.setItem = () => {
-      throw new DOMException('QuotaExceededError');
-    };
-    setMockWindow(storage);
+  it('deletes key via ctx.api.storage asynchronously', async () => {
+    const del = vi.fn(async () => undefined);
+    const ctx = createCtx({ delete: del });
 
-    expect(() => writeStorage('key', { big: 'data' })).not.toThrow();
+    await deleteAddonStorage(ctx, 'k');
+    expect(del).toHaveBeenCalledWith('k');
   });
 
-  it('returns fallback when key is missing', () => {
-    setMockWindow(createMockStorage()); // empty storage
+  it('swallows async delete errors', async () => {
+    const ctx = createCtx({
+      delete: async () => {
+        throw new Error('delete failed');
+      },
+    });
 
-    expect(readStorage('missing', 'default')).toBe('default');
+    await expect(deleteAddonStorage(ctx, 'k')).resolves.toBeUndefined();
+  });
+
+  it('returns fallback when async storage get throws', async () => {
+    const ctx = createCtx({
+      get: async () => {
+        throw new Error('get failed');
+      },
+    });
+
+    const result = await readAddonStorage(ctx, 'missing', 'default');
+    expect(result).toBe('default');
   });
 });
 
