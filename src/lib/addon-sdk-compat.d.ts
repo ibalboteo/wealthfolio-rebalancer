@@ -1,9 +1,12 @@
 import '@wealthfolio/addon-sdk';
+import type React from 'react';
 
 declare module '@wealthfolio/addon-sdk' {
   interface RouteConfig {
     id: string;
   }
-}
 
-export {};
+  interface RouterManager {
+    add(route: { id: string; path: string; component: React.ComponentType<unknown> }): void;
+  }
+}

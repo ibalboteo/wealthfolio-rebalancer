@@ -1,6 +1,5 @@
 import { type QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { AddonContext } from '@wealthfolio/addon-sdk';
-import { lazy } from 'react';
 import { Toaster } from './components/toaster';
 import { addonMainRouteId, addonName } from './lib';
 import { SelectedAccountProvider } from './lib/account-provider';
@@ -23,6 +22,6 @@ export default function enable(ctx: AddonContext) {
   ctx.router.add({
     id: addonMainRouteId,
     path: `/addons/${addonName}`,
-    component: lazy(() => Promise.resolve({ default: () => <RebalancerWrapper ctx={ctx} /> })),
+    component: () => <RebalancerWrapper ctx={ctx} />,
   });
 }

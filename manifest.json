@@ -30,10 +30,9 @@
     {
       "category": "ui",
       "functions": [
-        "sidebar.addItem",
         "router.add"
       ],
-      "purpose": "Add navigation items and routes to the sidebar"
+      "purpose": "Register addon routes in the UI"
     },
     {
       "category": "accounts",
