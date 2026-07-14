@@ -34,6 +34,9 @@ export function HoldingPlanner({ ctx, onSave }: HoldingPlannerProps) {
   );
   const [validationError, setValidationError] = useState<string | null>(null);
   const [prevHoldings, setPrevHoldings] = useState(holdings);
+  // Bumped whenever holdings reset, so the uncontrolled number inputs remount
+  // and pick up the fresh defaultValue.
+  const [formVersion, setFormVersion] = useState(0);
 
   // Adjust state during render when holdings change (avoids extra render from useEffect)
   if (holdings !== prevHoldings) {
@@ -45,6 +48,7 @@ export function HoldingPlanner({ ctx, onSave }: HoldingPlannerProps) {
         enabled: h.plan.enabled,
       }))
     );
+    setFormVersion((v) => v + 1);
     setValidationError(null);
   }
 
@@ -62,16 +66,18 @@ export function HoldingPlanner({ ctx, onSave }: HoldingPlannerProps) {
     });
   };
 
-  // Handler para cambiar valores
-  const handleChange = (index: number, field: 'target' | 'enabled', value: number | boolean) => {
-    // Ensure the target value is a valid number before updating the state
-    if (field === 'target' && (typeof value !== 'number' || Number.isNaN(value))) {
-      value = 0;
-    }
+  // Handler para cambiar el estado "enabled"
+  const handleEnabledChange = (index: number, enabled: boolean) => {
+    setFormState((prev) => prev.map((item, i) => (i === index ? { ...item, enabled } : item)));
+    setValidationError(null);
+  };
 
-    setFormState((prev) =>
-      prev.map((item, i) => (i === index ? { ...item, [field]: value } : item))
-    );
+  // Handler para el input de target. El input es no controlado (defaultValue)
+  // para que el navegador gestione decimales y las flechas up/down de forma
+  // nativa; aquí solo sincronizamos el número al modelo.
+  const handleTargetChange = (index: number, value: number) => {
+    const target = Number.isNaN(value) ? 0 : value;
+    setFormState((prev) => prev.map((item, i) => (i === index ? { ...item, target } : item)));
     setValidationError(null);
   };
 
@@ -113,13 +119,15 @@ export function HoldingPlanner({ ctx, onSave }: HoldingPlannerProps) {
                 )}
               </div>
               <Input
+                key={`${holding.id}-${formVersion}`}
                 type="number"
-                value={formState[idx]?.target ?? 0}
+                inputMode="decimal"
                 min={0}
                 max={100}
-                step={0.01}
+                step={0.1}
+                defaultValue={holding.plan.target}
                 aria-label={`Target allocation for ${holding.instrument?.symbol || holding.holdingType}`}
-                onChange={(e) => handleChange(idx, 'target', parseFloat(e.target.value))}
+                onChange={(e) => handleTargetChange(idx, e.target.valueAsNumber)}
                 className={cn('w-24 text-right', {
                   'bg-muted/40 text-muted-foreground': !formState[idx]?.enabled,
                 })}
@@ -129,7 +137,7 @@ export function HoldingPlanner({ ctx, onSave }: HoldingPlannerProps) {
             <Switch
               checked={formState[idx]?.enabled ?? false}
               aria-label={`Enable ${holding.instrument?.symbol || holding.holdingType} in the plan`}
-              onCheckedChange={(checked) => handleChange(idx, 'enabled', checked)}
+              onCheckedChange={(checked) => handleEnabledChange(idx, checked)}
             />
           </div>
         ))}
