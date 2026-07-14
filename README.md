@@ -74,7 +74,7 @@ pnpm dev:server     # start the Wealthfolio addon dev server
 pnpm dev            # build in watch mode
 pnpm type-check     # TypeScript check
 pnpm check          # Biome lint + format
-pnpm test           # Vitest unit tests (73 tests)
+pnpm test           # Vitest unit tests (77 tests)
 pnpm build          # production build
 ```
 
@@ -90,7 +90,7 @@ pnpm build          # production build
 - **State / Data**: TanStack Query v5 (with Suspense)
 - **Build Tool**: Vite
 - **Code Quality**: Biome (linting + formatting)
-- **Testing**: Vitest — 73 tests covering rebalance algorithm, storage helpers, and plan hooks
+- **Testing**: Vitest — 77 tests covering rebalance algorithm, storage helpers, and plan hooks
 - **Git Hooks**: Lefthook (type-check + Biome on pre-commit)
 - **SDK**: Wealthfolio Addon SDK v3
 
