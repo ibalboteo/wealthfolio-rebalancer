@@ -40,7 +40,7 @@ export function useAddonStorageState<T>(
     return () => {
       active = false;
     };
-  }, [ctx, defaultValue, key, validator]);
+  }, [ctx, defaultValue, key]);
 
   const setStoredValue = useCallback(
     (newValue: T | ((prev: T) => T)) => {

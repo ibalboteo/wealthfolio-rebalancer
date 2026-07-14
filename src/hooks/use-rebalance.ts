@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query';
 import type { AddonContext } from '@wealthfolio/addon-sdk';
 import { useMemo } from 'react';
 import type { RebalanceAction } from '../lib';
@@ -7,12 +8,7 @@ import {
   simulateRebalance,
   useSelectedAccount,
 } from '../lib';
-import {
-  type HoldingPlanData,
-  isHoldingPlanDataArray,
-  type PlannedHolding,
-  useHoldings,
-} from './use-holdings';
+import { loadHoldingPlan, type PlannedHolding, useHoldings } from './use-holdings';
 import { useAddonStorageState } from './use-local-storage';
 
 // ─── Tolerance ──────────────────────────────────────────────────────────────
@@ -49,8 +45,6 @@ export function useTolerance(ctx: AddonContext): [number, (pp: number) => void] 
 }
 
 export { TOLERANCE_MIN, TOLERANCE_MAX, TOLERANCE_STEP };
-
-const EMPTY_HOLDING_PLAN: HoldingPlanData[] = [];
 
 export interface RebalancePlan {
   transfers: RebalanceAction[];
@@ -94,23 +88,22 @@ export function useConfigure(ctx: AddonContext): boolean {
   const { selectedAccount } = useSelectedAccount();
   const accountId = selectedAccount?.id ?? '__none__';
 
-  // The stored value is HoldingPlanData[], not PlannedHolding[]
-  const [savedPlan, , hydrated] = useAddonStorageState<HoldingPlanData[]>(
-    ctx,
-    `addons:${addonName}:account:${accountId}:plan`,
-    EMPTY_HOLDING_PLAN,
-    isHoldingPlanDataArray
-  );
+  const { data: savedPlan, isLoading } = useQuery({
+    queryKey: ['holding-plan', accountId],
+    queryFn: () => loadHoldingPlan(ctx, accountId),
+    enabled: accountId !== '__none__' && !!ctx.api,
+    staleTime: 5 * 60 * 1000,
+  });
 
   if (accountId === '__none__') {
     return true;
   }
 
-  if (!hydrated) {
-    // During async hydration, treat configuration as required to avoid
+  if (isLoading) {
+    // During loading, treat configuration as required to avoid
     // showing the "plan corrupted" state with stale/default data.
     return true;
   }
 
-  return savedPlan.length === 0;
+  return !savedPlan || savedPlan.length === 0;
 }

@@ -7,6 +7,7 @@ const cardBase = 'rounded-lg border shadow-md p-6 flex flex-col gap-4 h-64';
 const cardVariants = {
   transfer: 'bg-card text-card-foreground',
   'on-target': 'border-success/20 bg-success/5',
+  drifted: 'border-warning/20 bg-warning/5',
 } as const;
 
 type TransferCardProps = RebalanceAction & {
@@ -19,7 +20,13 @@ type OnTargetCardProps = {
   totalPortfolioValue: number;
 };
 
-type HoldingCardProps = TransferCardProps | OnTargetCardProps;
+type DriftedCardProps = {
+  status: 'drifted';
+  holding: PlannedHolding;
+  totalPortfolioValue: number;
+};
+
+type HoldingCardProps = TransferCardProps | OnTargetCardProps | DriftedCardProps;
 
 export function HoldingCard(props: HoldingCardProps) {
   const className = `${cardBase} ${cardVariants[props.status]}`;
@@ -61,6 +68,50 @@ export function HoldingCard(props: HoldingCardProps) {
             <span className="text-sm font-semibold text-green-500">On target</span>
             <span className="text-xs text-muted-foreground tabular-nums">
               {currentPct.toFixed(1)}% ({deviationLabel})
+            </span>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  if (props.status === 'drifted') {
+    const { holding, totalPortfolioValue } = props;
+    const total = totalPortfolioValue;
+    const currentPct = total > 0 ? (holding.marketValue.base / total) * 100 : 0;
+    const targetPct = holding.plan?.target ?? 0;
+    const deviation = currentPct - targetPct;
+    const deviationLabel = `${deviation >= 0 ? '+' : ''}${deviation.toFixed(1)}pp`;
+
+    return (
+      <Card className={className}>
+        <div className="flex items-center gap-4">
+          <TickerAvatar
+            symbol={holding.instrument?.symbol || `$${holding.holdingType}`}
+            className="w-12 h-12 flex-none"
+          />
+          <h3 className="text-sm font-semibold truncate">
+            {holding.instrument?.name || holding.instrument?.symbol || holding.holdingType}
+          </h3>
+        </div>
+
+        <div className="flex items-center gap-4 flex-1">
+          <div className="w-12 flex-none" />
+          <AmountDisplay
+            value={holding.marketValue.base}
+            currency={holding.baseCurrency}
+            className="text-xl font-bold"
+          />
+        </div>
+
+        <div className="flex items-center gap-4 h-12">
+          <div className="w-12 flex-none flex justify-center">
+            <Icons.AlertCircle className="w-5 h-5 text-yellow-500" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-sm font-semibold text-yellow-500">Drifted</span>
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {currentPct.toFixed(1)}% ({deviationLabel}) · target {targetPct.toFixed(1)}%
             </span>
           </div>
         </div>
