@@ -1,14 +1,19 @@
 import { AmountDisplay, Card, cn, Icons, Skeleton } from '@wealthfolio/ui';
+import { m, useReducedMotion } from 'framer-motion';
 import type { PlannedHolding } from '../hooks/use-holdings';
 import type { RebalanceAction } from '../lib';
 import { TickerAvatar } from './ticker-avatar';
 
-const cardBase = 'rounded-lg border shadow-md p-6 flex flex-col gap-4 h-64';
+const cardBase = 'rounded-lg border p-6 flex flex-col gap-4 h-64';
 const cardVariants = {
-  transfer: 'bg-card text-card-foreground',
+  transfer: 'bg-card text-card-foreground border-transparent',
   'on-target': 'border-success/20 bg-success/5',
   drifted: 'border-warning/20 bg-warning/5',
 } as const;
+
+/** Border-beam geometry — outer radius and the sliver of border the beam occupies. */
+const CARD_RADIUS = '0.5rem';
+const BEAM_WIDTH = '1.5px';
 
 /** Placeholder card that mirrors HoldingCard's layout to avoid layout shift while loading. */
 export function HoldingCardSkeleton() {
@@ -147,41 +152,96 @@ export function HoldingCard(props: HoldingCardProps) {
     from.marketValue.base > 0 ? Math.min(100, (amount / from.marketValue.base) * 100) : 0;
 
   return (
-    <Card className={className}>
-      <div className="flex items-center gap-4">
-        <TickerAvatar
-          symbol={from.instrument?.symbol || `$${from.holdingType}`}
-          className="w-12 h-12 flex-none"
-        />
-        <h3 className="text-sm font-semibold truncate">
-          {from.instrument?.name || from.instrument?.symbol || from.holdingType}
-        </h3>
-      </div>
+    <TransferCardAnimated
+      from={from}
+      to={to}
+      amount={amount}
+      currency={currency}
+      transferPct={transferPct}
+    />
+  );
+}
 
-      <div className="flex items-center gap-4 flex-1">
-        <div className="w-12 flex-none flex justify-center">
-          <Icons.ArrowDown className="w-5 h-5 text-muted-foreground" />
-        </div>
-        <div className="flex items-baseline gap-2">
-          <AmountDisplay value={amount} currency={currency} className="text-xl font-bold" />
-          <span
-            className="text-sm font-medium text-muted-foreground tabular-nums"
-            title="Share of the source holding being transferred"
-          >
-            {transferPct.toFixed(1)}%
-          </span>
-        </div>
-      </div>
+function TransferCardAnimated({
+  from,
+  to,
+  amount,
+  currency,
+  transferPct,
+}: {
+  from: RebalanceAction['from'];
+  to: RebalanceAction['to'];
+  amount: number;
+  currency: string;
+  transferPct: number;
+}) {
+  const prefersReducedMotion = useReducedMotion();
 
-      <div className="flex items-center gap-4">
-        <TickerAvatar
-          symbol={to.instrument?.symbol || `$${to.holdingType}`}
-          className="w-12 h-12 flex-none"
+  return (
+    <div
+      className="relative overflow-hidden h-64"
+      style={{ padding: BEAM_WIDTH, borderRadius: CARD_RADIUS, background: 'var(--border)' }}
+    >
+      {/* Rotating conic gradient — the visible "beam" is the sliver not covered by inner card */}
+      {!prefersReducedMotion && (
+        <m.div
+          className="absolute z-0"
+          style={{
+            top: '-50%',
+            left: '-50%',
+            width: '200%',
+            height: '200%',
+            background:
+              'conic-gradient(from 0deg, transparent 0deg, transparent 320deg, var(--primary) 350deg, transparent 360deg)',
+          }}
+          animate={{ rotate: 360 }}
+          transition={{
+            duration: 4,
+            repeat: Number.POSITIVE_INFINITY,
+            ease: 'linear',
+          }}
         />
-        <h3 className="text-sm font-semibold truncate">
-          {to.instrument?.name || to.instrument?.symbol || to.holdingType}
-        </h3>
+      )}
+      {/* Inner card — covers the gradient, leaving only the border visible */}
+      <div
+        className="relative z-10 flex flex-col gap-4 p-6 h-full bg-card text-card-foreground"
+        style={{ borderRadius: `calc(${CARD_RADIUS} - ${BEAM_WIDTH})` }}
+      >
+        <div className="flex items-center gap-4">
+          <TickerAvatar
+            symbol={from.instrument?.symbol || `$${from.holdingType}`}
+            className="w-12 h-12 flex-none"
+          />
+          <h3 className="text-sm font-semibold truncate">
+            {from.instrument?.name || from.instrument?.symbol || from.holdingType}
+          </h3>
+        </div>
+
+        <div className="flex items-center gap-4 flex-1">
+          <div className="w-12 flex-none flex justify-center">
+            <Icons.ArrowDown className="w-5 h-5 text-muted-foreground" />
+          </div>
+          <div className="flex items-baseline gap-2">
+            <AmountDisplay value={amount} currency={currency} className="text-xl font-bold" />
+            <span
+              className="text-sm font-medium text-muted-foreground tabular-nums"
+              title="Percentage of the source fund being transferred"
+            >
+              {transferPct.toFixed(1)}%
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <TickerAvatar
+            symbol={to.instrument?.symbol || `$${to.holdingType}`}
+            className="w-12 h-12 flex-none"
+          />
+          <h3 className="text-sm font-semibold truncate">
+            {to.instrument?.name || to.instrument?.symbol || to.holdingType}
+          </h3>
+        </div>
       </div>
-    </Card>
+    </div>
   );
 }

@@ -2,7 +2,7 @@
   "id": "rebalancer",
   "name": "rebalancer",
   "version": "3.0.0",
-  "description": "Rebalancer calculates the exact trades you need to keep your portfolio on target, on demand.",
+  "description": "Identifies the optimal fund-to-fund transfers to keep your portfolio on target — tax-free in Spain.",
   "author": "Ivan Balboteo",
   "main": "dist/addon.js",
   "sdkVersion": "3.6.0",

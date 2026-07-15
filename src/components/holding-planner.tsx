@@ -52,9 +52,12 @@ export function HoldingPlanner({ ctx, onSave }: HoldingPlannerProps) {
     setValidationError(null);
   }
 
-  // Submit handler
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
+  // Submit handler. Invoked from the button's onClick rather than the form's
+  // native submit: the addon runs in an iframe with `sandbox="allow-scripts"`
+  // (no `allow-forms`), so the browser blocks native form submission before the
+  // submit event ever fires. The event is optional so it can be called directly.
+  const handleSubmit = (e?: FormEvent) => {
+    e?.preventDefault();
     if (!isBalanced) {
       setValidationError(`Enabled targets sum to ${roundedTotal.toFixed(2)}%, must equal 100%`);
       return;
@@ -160,7 +163,11 @@ export function HoldingPlanner({ ctx, onSave }: HoldingPlannerProps) {
             </span>
           </p>
         )}
-        <Button type="submit" disabled={mutation.isPending || !isBalanced}>
+        <Button
+          type="button"
+          onClick={() => handleSubmit()}
+          disabled={mutation.isPending || !isBalanced}
+        >
           {mutation.isPending ? <Icons.Loader className="h-4 w-4 animate-spin mr-2" /> : null}
           Save
         </Button>

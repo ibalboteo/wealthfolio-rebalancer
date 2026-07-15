@@ -51,7 +51,8 @@ export function EditPlanSheet({ ctx, label = 'Edit Plan', compact = false }: Edi
         <SheetHeader className="flex-shrink-0">
           <SheetTitle>Edit Plan</SheetTitle>
           <SheetDescription>
-            Adjust your target allocations to create a personalized investment plan.
+            Define your target allocations — the addon will calculate the optimal transfers to reach
+            them.
           </SheetDescription>
         </SheetHeader>
 
@@ -133,7 +134,7 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
     return (
       <div className="flex flex-col items-center justify-center flex-1 min-h-0 gap-6">
         <p className="text-lg font-light text-muted-foreground">
-          No transactions found in this account.
+          No holdings found in this account.
         </p>
         <Button
           onClick={() => ctx.api.navigation.navigate('/activities')}
@@ -152,7 +153,8 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
         <div className="flex flex-col items-center gap-3 text-center max-w-md">
           <Icons.AlertCircle className="h-6 w-6 text-muted-foreground" />
           <p className="text-lg font-light text-muted-foreground">
-            Please configure your plan to establish target allocations.
+            Set your target allocations to discover which transfers will bring your portfolio on
+            target.
           </p>
         </div>
         <EditPlanSheet ctx={ctx} label="Create Plan" />
@@ -219,7 +221,7 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
           <EditPlanSheet ctx={ctx} compact />
         </div>
       )}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 min-h-0 overflow-y-auto">
         <LazyMotion features={domAnimation}>
           <m.ul
             className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-fr"
@@ -292,7 +294,7 @@ export function Rebalancer({ ctx }: { ctx: AddonContext }) {
       <ApplicationHeader
         className="shrink-0"
         heading={pascalCase(addonName)}
-        text="Keep your portfolio aligned with your investment goals"
+        text="Identify tax-free transfers to keep your portfolio on target"
       >
         <AccountSelector ctx={ctx} />
       </ApplicationHeader>
@@ -300,7 +302,7 @@ export function Rebalancer({ ctx }: { ctx: AddonContext }) {
       {!selectedAccount ? (
         <div className="flex items-center justify-center flex-1 min-h-0">
           <p className="text-lg font-light text-muted-foreground text-center max-w-md">
-            Please select an account to identify rebalance opportunities.
+            Please select an account to identify transfer opportunities.
           </p>
         </div>
       ) : (
