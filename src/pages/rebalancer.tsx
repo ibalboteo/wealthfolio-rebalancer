@@ -13,7 +13,6 @@ import {
   TabsList,
   TabsTrigger,
 } from '@wealthfolio/ui';
-import { domAnimation, LazyMotion, m, useReducedMotion } from 'framer-motion';
 import { Suspense, useMemo, useState } from 'react';
 import {
   AccountSelector,
@@ -24,6 +23,7 @@ import {
 } from '../components';
 import { HoldingCardSkeleton } from '../components/transfer-card';
 import { useSuspenseHoldings } from '../hooks/use-holdings';
+import { usePrefersReducedMotion } from '../hooks/use-prefers-reduced-motion';
 import {
   TOLERANCE_MAX,
   TOLERANCE_MIN,
@@ -33,6 +33,12 @@ import {
   useTolerance,
 } from '../hooks/use-rebalance';
 import { addonName, sumEnabledValue, useSelectedAccount } from '../lib';
+
+const FADE_IN_UP = 'rebalancer-fade-in-up';
+const FADE_IN_UP_KEYFRAMES = `@keyframes ${FADE_IN_UP} {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}`;
 
 interface EditPlanSheetProps {
   ctx: AddonContext;
@@ -98,7 +104,7 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
   const [tolerancePp, setTolerancePp] = useTolerance(ctx);
   const rebalancePlan = useRebalance(holdings, tolerancePp / 100);
   const configurationRequired = useConfigure(holdings);
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = usePrefersReducedMotion();
   const [view, setView] = useState<'transfers' | 'overview'>('transfers');
 
   const hasHoldings = holdings.length > 0;
@@ -217,23 +223,20 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
               </p>
             </div>
           ) : (
-            <LazyMotion features={domAnimation}>
-              <m.ul
-                className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-fr"
-                initial="hidden"
-                animate="show"
-                variants={{
-                  hidden: {},
-                  show: { transition: { staggerChildren: prefersReducedMotion ? 0 : 0.04 } },
-                }}
-              >
-                {rebalancePlan?.transfers.map(({ from, to, amount, currency }) => (
-                  <m.li
+            <>
+              <style>{FADE_IN_UP_KEYFRAMES}</style>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-fr">
+                {rebalancePlan?.transfers.map(({ from, to, amount, currency }, index) => (
+                  <li
                     key={`${from.id}-${to.id}`}
-                    variants={{
-                      hidden: { opacity: 0, y: prefersReducedMotion ? 0 : 8 },
-                      show: { opacity: 1, y: 0 },
-                    }}
+                    style={
+                      prefersReducedMotion
+                        ? undefined
+                        : {
+                            animation: `${FADE_IN_UP} 0.3s ease-out both`,
+                            animationDelay: `${index * 0.04}s`,
+                          }
+                    }
                   >
                     <HoldingCard
                       status="transfer"
@@ -242,10 +245,10 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
                       amount={amount}
                       currency={currency}
                     />
-                  </m.li>
+                  </li>
                 ))}
-              </m.ul>
-            </LazyMotion>
+              </ul>
+            </>
           )}
         </TabsContent>
 

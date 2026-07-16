@@ -10,9 +10,9 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from '@wealthfolio/ui';
-import { useReducedMotion } from 'framer-motion';
 import { useMemo, useState } from 'react';
 import type { PlannedHolding } from '../hooks/use-holdings';
+import { usePrefersReducedMotion } from '../hooks/use-prefers-reduced-motion';
 import { allocationColorFor, buildAllocationColorMap } from '../lib/allocation-colors';
 import {
   type AllocationStatus,
@@ -58,7 +58,7 @@ export function AllocationOverview({
 }: AllocationOverviewProps) {
   const [mode, setMode] = useState<Mode>('current');
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const reducedMotion = useReducedMotion() ?? false;
+  const reducedMotion = usePrefersReducedMotion();
 
   const sourceHoldings = mode === 'current' ? holdings : previewHoldings;
   const totalValue = mode === 'current' ? totalEnabledValue : totalPreviewValue;
