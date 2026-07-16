@@ -102,7 +102,7 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
   const rebalancePlan = useRebalance(holdings, tolerancePp / 100);
   const configurationRequired = useConfigure(holdings);
   const prefersReducedMotion = usePrefersReducedMotion();
-  const [view, setView] = useState<'transfers' | 'overview'>('transfers');
+  const [view, setView] = useState<'transfers' | 'status' | 'projected'>('transfers');
 
   const hasHoldings = holdings.length > 0;
   const hasPlan = hasHoldings && !configurationRequired;
@@ -205,10 +205,11 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
         <AnimatedToggleGroup
           className="self-start"
           value={view}
-          onValueChange={(v) => setView(v as 'transfers' | 'overview')}
+          onValueChange={(v) => setView(v as 'transfers' | 'status' | 'projected')}
           items={[
             { value: 'transfers', label: 'Transfers' },
-            { value: 'overview', label: 'Overview' },
+            { value: 'status', label: 'Status' },
+            { value: 'projected', label: 'Projected' },
           ]}
         />
 
@@ -259,6 +260,7 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
               totalPreviewValue={rebalancePlan?.totalPreviewValue ?? 0}
               tolerancePp={tolerancePp}
               currency={holdings[0]?.baseCurrency ?? 'USD'}
+              mode={view === 'projected' ? 'projected' : 'current'}
             />
           </div>
         )}

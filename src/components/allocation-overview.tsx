@@ -1,6 +1,5 @@
 // src/components/allocation-overview.tsx
 import {
-  AnimatedToggleGroup,
   Card,
   CardContent,
   CardDescription,
@@ -20,6 +19,8 @@ import {
 } from '../lib/allocation-summary';
 import { AllocationDonut } from './allocation-donut';
 
+export type AllocationMode = 'current' | 'projected';
+
 export interface AllocationOverviewProps {
   holdings: PlannedHolding[];
   previewHoldings: PlannedHolding[];
@@ -27,9 +28,8 @@ export interface AllocationOverviewProps {
   totalPreviewValue: number;
   tolerancePp: number;
   currency: string;
+  mode: AllocationMode;
 }
-
-type Mode = 'current' | 'projected';
 
 function driftColor(status: AllocationStatus): string {
   if (status === 'in_band') return 'text-muted-foreground';
@@ -70,8 +70,8 @@ export function AllocationOverview({
   totalPreviewValue,
   tolerancePp,
   currency,
+  mode,
 }: AllocationOverviewProps) {
-  const [mode, setMode] = useState<Mode>('current');
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const reducedMotion = usePrefersReducedMotion();
 
@@ -90,17 +90,6 @@ export function AllocationOverview({
 
   return (
     <div className="flex-1 min-h-0 overflow-y-auto space-y-6">
-      <div className="flex justify-start">
-        <AnimatedToggleGroup
-          value={mode}
-          onValueChange={(v) => setMode(v as Mode)}
-          items={[
-            { value: 'current', label: 'Current' },
-            { value: 'projected', label: 'Projected' },
-          ]}
-        />
-      </div>
-
       <div className="grid gap-6">
         <Card className="h-full min-w-0">
           <CardHeader className="pb-3">
