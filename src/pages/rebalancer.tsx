@@ -8,11 +8,21 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
 } from '@wealthfolio/ui';
 import { pascalCase } from 'change-case';
 import { domAnimation, LazyMotion, m, useReducedMotion } from 'framer-motion';
 import { Suspense, useMemo, useState } from 'react';
-import { AccountSelector, ApplicationHeader, HoldingCard, HoldingPlanner } from '../components';
+import {
+  AccountSelector,
+  AllocationOverview,
+  ApplicationHeader,
+  HoldingCard,
+  HoldingPlanner,
+} from '../components';
 import { HoldingCardSkeleton } from '../components/transfer-card';
 import { useSuspenseHoldings } from '../hooks/use-holdings';
 import {
@@ -23,7 +33,7 @@ import {
   useRebalance,
   useTolerance,
 } from '../hooks/use-rebalance';
-import { addonName, useSelectedAccount } from '../lib';
+import { addonName, sumEnabledValue, useSelectedAccount } from '../lib';
 
 interface EditPlanSheetProps {
   ctx: AddonContext;
@@ -90,6 +100,7 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
   const rebalancePlan = useRebalance(holdings, tolerancePp / 100);
   const configurationRequired = useConfigure(holdings);
   const prefersReducedMotion = useReducedMotion();
+  const [view, setView] = useState<'transfers' | 'overview'>('transfers');
 
   const hasHoldings = holdings.length > 0;
   const hasPlan = hasHoldings && !configurationRequired;
@@ -221,67 +232,90 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
           <EditPlanSheet ctx={ctx} compact />
         </div>
       )}
-      <div className="flex-1 min-h-0 overflow-y-auto">
-        <LazyMotion features={domAnimation}>
-          <m.ul
-            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-fr"
-            initial="hidden"
-            animate="show"
-            variants={{
-              hidden: {},
-              show: { transition: { staggerChildren: prefersReducedMotion ? 0 : 0.04 } },
-            }}
-          >
-            {rebalancePlan?.transfers.map(({ from, to, amount, currency }) => (
-              <m.li
-                key={`${from.id}-${to.id}`}
-                variants={{
-                  hidden: { opacity: 0, y: prefersReducedMotion ? 0 : 8 },
-                  show: { opacity: 1, y: 0 },
-                }}
-              >
-                <HoldingCard
-                  status="transfer"
-                  from={from}
-                  to={to}
-                  amount={amount}
-                  currency={currency}
-                />
-              </m.li>
-            ))}
-            {driftedHoldings.map((h) => (
-              <m.li
-                key={h.id}
-                variants={{
-                  hidden: { opacity: 0, y: prefersReducedMotion ? 0 : 8 },
-                  show: { opacity: 1, y: 0 },
-                }}
-              >
-                <HoldingCard
-                  status="drifted"
-                  holding={h}
-                  totalPortfolioValue={rebalancePlan?.totalPreviewValue ?? 0}
-                />
-              </m.li>
-            ))}
-            {onTargetHoldings.map((h) => (
-              <m.li
-                key={h.id}
-                variants={{
-                  hidden: { opacity: 0, y: prefersReducedMotion ? 0 : 8 },
-                  show: { opacity: 1, y: 0 },
-                }}
-              >
-                <HoldingCard
-                  status="on-target"
-                  holding={h}
-                  totalPortfolioValue={rebalancePlan?.totalPreviewValue ?? 0}
-                />
-              </m.li>
-            ))}
-          </m.ul>
-        </LazyMotion>
-      </div>
+
+      <Tabs
+        value={view}
+        onValueChange={(v) => setView(v as 'transfers' | 'overview')}
+        className="flex flex-1 min-h-0 flex-col gap-4"
+      >
+        <TabsList className="self-start">
+          <TabsTrigger value="transfers">Transfers</TabsTrigger>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="transfers" className="flex-1 min-h-0 overflow-y-auto">
+          <LazyMotion features={domAnimation}>
+            <m.ul
+              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-fr"
+              initial="hidden"
+              animate="show"
+              variants={{
+                hidden: {},
+                show: { transition: { staggerChildren: prefersReducedMotion ? 0 : 0.04 } },
+              }}
+            >
+              {rebalancePlan?.transfers.map(({ from, to, amount, currency }) => (
+                <m.li
+                  key={`${from.id}-${to.id}`}
+                  variants={{
+                    hidden: { opacity: 0, y: prefersReducedMotion ? 0 : 8 },
+                    show: { opacity: 1, y: 0 },
+                  }}
+                >
+                  <HoldingCard
+                    status="transfer"
+                    from={from}
+                    to={to}
+                    amount={amount}
+                    currency={currency}
+                  />
+                </m.li>
+              ))}
+              {driftedHoldings.map((h) => (
+                <m.li
+                  key={h.id}
+                  variants={{
+                    hidden: { opacity: 0, y: prefersReducedMotion ? 0 : 8 },
+                    show: { opacity: 1, y: 0 },
+                  }}
+                >
+                  <HoldingCard
+                    status="drifted"
+                    holding={h}
+                    totalPortfolioValue={rebalancePlan?.totalPreviewValue ?? 0}
+                  />
+                </m.li>
+              ))}
+              {onTargetHoldings.map((h) => (
+                <m.li
+                  key={h.id}
+                  variants={{
+                    hidden: { opacity: 0, y: prefersReducedMotion ? 0 : 8 },
+                    show: { opacity: 1, y: 0 },
+                  }}
+                >
+                  <HoldingCard
+                    status="on-target"
+                    holding={h}
+                    totalPortfolioValue={rebalancePlan?.totalPreviewValue ?? 0}
+                  />
+                </m.li>
+              ))}
+            </m.ul>
+          </LazyMotion>
+        </TabsContent>
+
+        <TabsContent value="overview" className="flex-1 min-h-0">
+          <AllocationOverview
+            holdings={holdings}
+            previewHoldings={rebalancePlan?.previewHoldings ?? holdings}
+            totalEnabledValue={sumEnabledValue(holdings)}
+            totalPreviewValue={rebalancePlan?.totalPreviewValue ?? 0}
+            tolerancePp={tolerancePp}
+            currency={holdings[0]?.baseCurrency ?? 'USD'}
+          />
+        </TabsContent>
+      </Tabs>
     </>
   );
 }
