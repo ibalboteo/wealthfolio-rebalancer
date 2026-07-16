@@ -90,7 +90,7 @@ export function AllocationOverview({
 
   return (
     <div className="flex-1 min-h-0 overflow-y-auto space-y-6">
-      <div className="flex justify-end">
+      <div className="flex justify-start">
         <AnimatedToggleGroup
           value={mode}
           onValueChange={(v) => setMode(v as Mode)}
