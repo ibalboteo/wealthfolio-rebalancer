@@ -15,7 +15,6 @@ import { useMemo, useState } from 'react';
 import type { PlannedHolding } from '../hooks/use-holdings';
 import { allocationColorFor, buildAllocationColorMap } from '../lib/allocation-colors';
 import {
-  type AllocationRow,
   type AllocationStatus,
   buildAllocationSummary,
   selectAllocationGaps,
