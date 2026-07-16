@@ -224,8 +224,11 @@ export function AllocationOverview({
                         >
                           {index + 1}
                         </span>
-                        <p className="text-foreground truncate text-[13px] font-semibold">
-                          {row.symbol}
+                        <p
+                          className="text-foreground truncate text-[13px] font-semibold"
+                          title={row.name}
+                        >
+                          {row.name}
                         </p>
                       </div>
                       <span
@@ -252,7 +255,7 @@ export function AllocationOverview({
                     <span className="px-1.5">·</span>
                     {gaps
                       .slice(3)
-                      .map((r) => `${r.symbol} ${formatDrift(r.driftPp)}`)
+                      .map((r) => `${r.name} ${formatDrift(r.driftPp)}`)
                       .join(' · ')}
                   </li>
                 )}

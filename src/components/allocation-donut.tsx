@@ -103,6 +103,7 @@ export function AllocationDonut({
             <div
               className="text-muted-foreground max-w-[75%] truncate uppercase tracking-wider"
               style={{ fontSize: Math.round(size * 0.042) }}
+              title={hoveredRow.name}
             >
               {hoveredRow.symbol}
             </div>
