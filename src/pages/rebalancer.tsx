@@ -33,7 +33,7 @@ import {
   useRebalance,
   useTolerance,
 } from '../hooks/use-rebalance';
-import { addonName, currentPct, sumEnabledValue, useSelectedAccount } from '../lib';
+import { addonName, sumEnabledValue, useSelectedAccount } from '../lib';
 
 interface EditPlanSheetProps {
   ctx: AddonContext;
@@ -105,39 +105,7 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
   const hasHoldings = holdings.length > 0;
   const hasPlan = hasHoldings && !configurationRequired;
 
-  // Holdings involved in a transfer (by id)
-  const transferIds = useMemo(
-    () => new Set(rebalancePlan?.transfers.flatMap(({ from, to }) => [from.id, to.id]) ?? []),
-    [rebalancePlan?.transfers]
-  );
   const totalEnabledValue = useMemo(() => sumEnabledValue(holdings), [holdings]);
-
-  // A holding is "on target" only when it is enabled, not part of a transfer,
-  // AND its actual deviation from target is within the configured tolerance.
-  const onTargetHoldings = useMemo(
-    () =>
-      hasPlan
-        ? holdings.filter((h) => {
-            if (!h.plan?.enabled || transferIds.has(h.id)) return false;
-            const pct = currentPct(h.marketValue.base, totalEnabledValue);
-            return Math.abs(pct - (h.plan?.target ?? 0)) <= tolerancePp;
-          })
-        : [],
-    [hasPlan, holdings, transferIds, totalEnabledValue, tolerancePp]
-  );
-
-  // Holdings that are enabled, not in a transfer, but outside tolerance (drifted).
-  const driftedHoldings = useMemo(
-    () =>
-      hasPlan
-        ? holdings.filter((h) => {
-            if (!h.plan?.enabled || transferIds.has(h.id)) return false;
-            const pct = currentPct(h.marketValue.base, totalEnabledValue);
-            return Math.abs(pct - (h.plan?.target ?? 0)) > tolerancePp;
-          })
-        : [],
-    [hasPlan, holdings, transferIds, totalEnabledValue, tolerancePp]
-  );
 
   if (!hasHoldings) {
     return (
@@ -171,13 +139,13 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
     );
   }
 
-  // Plan exists but produces no visible cards. The stored allocations are
-  // invalid (e.g. all targets = 0, or enabled weights don't sum to 100).
-  const planIsCorrupted =
-    hasPlan &&
-    (rebalancePlan?.transfers.length ?? 0) === 0 &&
-    onTargetHoldings.length === 0 &&
-    driftedHoldings.length === 0;
+  // A saved plan must have its enabled targets sum to 100%. Legacy or
+  // hand-edited storage can violate that; treat it as needing adjustment.
+  const enabledTargetsSum = holdings.reduce(
+    (sum, h) => (h.plan?.enabled ? sum + (h.plan?.target ?? 0) : sum),
+    0
+  );
+  const planIsCorrupted = hasPlan && Math.round(enabledTargetsSum * 100) / 100 !== 100;
 
   if (planIsCorrupted) {
     return (
@@ -242,65 +210,44 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
         </TabsList>
 
         <TabsContent value="transfers" className="flex-1 min-h-0 overflow-y-auto">
-          <LazyMotion features={domAnimation}>
-            <m.ul
-              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-fr"
-              initial="hidden"
-              animate="show"
-              variants={{
-                hidden: {},
-                show: { transition: { staggerChildren: prefersReducedMotion ? 0 : 0.04 } },
-              }}
-            >
-              {rebalancePlan?.transfers.map(({ from, to, amount, currency }) => (
-                <m.li
-                  key={`${from.id}-${to.id}`}
-                  variants={{
-                    hidden: { opacity: 0, y: prefersReducedMotion ? 0 : 8 },
-                    show: { opacity: 1, y: 0 },
-                  }}
-                >
-                  <HoldingCard
-                    status="transfer"
-                    from={from}
-                    to={to}
-                    amount={amount}
-                    currency={currency}
-                  />
-                </m.li>
-              ))}
-              {driftedHoldings.map((h) => (
-                <m.li
-                  key={h.id}
-                  variants={{
-                    hidden: { opacity: 0, y: prefersReducedMotion ? 0 : 8 },
-                    show: { opacity: 1, y: 0 },
-                  }}
-                >
-                  <HoldingCard
-                    status="drifted"
-                    holding={h}
-                    totalPortfolioValue={rebalancePlan?.totalPreviewValue ?? 0}
-                  />
-                </m.li>
-              ))}
-              {onTargetHoldings.map((h) => (
-                <m.li
-                  key={h.id}
-                  variants={{
-                    hidden: { opacity: 0, y: prefersReducedMotion ? 0 : 8 },
-                    show: { opacity: 1, y: 0 },
-                  }}
-                >
-                  <HoldingCard
-                    status="on-target"
-                    holding={h}
-                    totalPortfolioValue={rebalancePlan?.totalPreviewValue ?? 0}
-                  />
-                </m.li>
-              ))}
-            </m.ul>
-          </LazyMotion>
+          {(rebalancePlan?.transfers.length ?? 0) === 0 ? (
+            <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
+              <Icons.CheckCircle className="h-6 w-6 text-success" />
+              <p className="text-lg font-light text-muted-foreground max-w-md">
+                Your portfolio is on target — no transfers needed.
+              </p>
+            </div>
+          ) : (
+            <LazyMotion features={domAnimation}>
+              <m.ul
+                className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-fr"
+                initial="hidden"
+                animate="show"
+                variants={{
+                  hidden: {},
+                  show: { transition: { staggerChildren: prefersReducedMotion ? 0 : 0.04 } },
+                }}
+              >
+                {rebalancePlan?.transfers.map(({ from, to, amount, currency }) => (
+                  <m.li
+                    key={`${from.id}-${to.id}`}
+                    variants={{
+                      hidden: { opacity: 0, y: prefersReducedMotion ? 0 : 8 },
+                      show: { opacity: 1, y: 0 },
+                    }}
+                  >
+                    <HoldingCard
+                      status="transfer"
+                      from={from}
+                      to={to}
+                      amount={amount}
+                      currency={currency}
+                    />
+                  </m.li>
+                ))}
+              </m.ul>
+            </LazyMotion>
+          )}
         </TabsContent>
 
         <TabsContent value="overview" className="flex-1 min-h-0">
