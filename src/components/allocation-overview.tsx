@@ -121,7 +121,7 @@ export function AllocationOverview({
 
               <div className="min-w-0">
                 <style>{ALLOCATION_TABLE_CSS}</style>
-                <div className="rb-ao-header rb-ao-row text-muted-foreground px-2 pb-2 text-[10px] font-medium uppercase tracking-wider">
+                <div className="rb-ao-header rb-ao-row text-muted-foreground px-2 pb-2 text-xs font-medium uppercase tracking-wider">
                   <span className="rb-ao-name">Fund</span>
                   <span className="rb-ao-bar">Allocation</span>
                   <span className="rb-ao-cell w-16 text-right">Current</span>
@@ -150,14 +150,14 @@ export function AllocationOverview({
                             style={{ background: rowColor }}
                           />
                           <span
-                            className="text-foreground min-w-0 flex-1 truncate text-[12.5px] font-semibold"
+                            className="text-foreground min-w-0 flex-1 truncate text-xs font-semibold"
                             title={row.name}
                           >
                             {row.name}
                           </span>
                           <span
                             className={cn(
-                              'rb-ao-drift-m shrink-0 text-[12px] font-semibold tabular-nums',
+                              'rb-ao-drift-m shrink-0 text-xs font-semibold tabular-nums',
                               driftColor(row.status)
                             )}
                           >
@@ -184,7 +184,7 @@ export function AllocationOverview({
                           </div>
                         </div>
 
-                        <div className="rb-ao-values-m justify-between text-[11px] text-muted-foreground tabular-nums">
+                        <div className="rb-ao-values-m justify-between text-xs text-muted-foreground tabular-nums">
                           <span>
                             Current{' '}
                             <span className="text-foreground font-medium">
@@ -199,15 +199,15 @@ export function AllocationOverview({
                           </span>
                         </div>
 
-                        <span className="rb-ao-cell text-foreground w-16 text-right text-[12px] font-semibold tabular-nums">
+                        <span className="rb-ao-cell text-foreground w-16 text-right text-xs font-semibold tabular-nums">
                           {row.currentPct.toFixed(1)}%
                         </span>
-                        <span className="rb-ao-cell text-muted-foreground w-12 text-right text-[12px] font-medium tabular-nums">
+                        <span className="rb-ao-cell text-muted-foreground w-12 text-right text-xs font-medium tabular-nums">
                           {row.targetPct.toFixed(0)}%
                         </span>
                         <span
                           className={cn(
-                            'rb-ao-cell w-14 text-right text-[12px] font-semibold tabular-nums',
+                            'rb-ao-cell w-14 text-right text-xs font-semibold tabular-nums',
                             driftColor(row.status)
                           )}
                         >
@@ -233,7 +233,7 @@ export function AllocationOverview({
           </CardHeader>
           <CardContent className="flex flex-1 flex-col">
             {gaps.length === 0 ? (
-              <p className="text-muted-foreground py-6 text-center text-[13px]">
+              <p className="text-muted-foreground py-6 text-center text-sm">
                 Everything is within target. No action required.
               </p>
             ) : (
@@ -243,13 +243,13 @@ export function AllocationOverview({
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex min-w-0 items-center gap-2.5">
                         <span
-                          className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold tabular-nums text-background"
+                          className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold tabular-nums text-background"
                           style={{ backgroundColor: allocationColorFor(row.id, colorMap, index) }}
                         >
                           {index + 1}
                         </span>
                         <p
-                          className="text-foreground min-w-0 truncate text-[13px] font-semibold"
+                          className="text-foreground min-w-0 truncate text-sm font-semibold"
                           title={row.name}
                         >
                           {row.name}
@@ -257,14 +257,14 @@ export function AllocationOverview({
                       </div>
                       <span
                         className={cn(
-                          'shrink-0 text-[12.5px] font-bold tabular-nums',
+                          'shrink-0 text-xs font-bold tabular-nums',
                           driftColor(row.status)
                         )}
                       >
                         {formatDrift(row.driftPp)}
                       </span>
                     </div>
-                    <p className="text-muted-foreground mt-2 pl-7 text-[12px]">
+                    <p className="text-muted-foreground mt-2 pl-7 text-xs">
                       {row.status === 'overweight' ? 'Above target' : 'Below target'} ·{' '}
                       {row.currentPct.toFixed(1)}% vs {row.targetPct.toFixed(0)}% ·{' '}
                       {formatCompactAmount(row.value, currency)}
@@ -272,7 +272,7 @@ export function AllocationOverview({
                   </li>
                 ))}
                 {gaps.length > 3 && (
-                  <li className="bg-muted/20 text-muted-foreground rounded-lg px-3.5 py-2.5 text-[11.5px]">
+                  <li className="bg-muted/20 text-muted-foreground rounded-lg px-3.5 py-2.5 text-xs">
                     <span className="text-foreground font-medium">
                       +{gaps.length - 3} more off target
                     </span>

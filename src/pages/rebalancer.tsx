@@ -181,7 +181,7 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
               >
                 <Icons.Minus className="h-3 w-3" />
               </Button>
-              <span className="min-w-[3rem] text-center text-sm font-medium tabular-nums">
+              <span className="min-w-12 text-center text-sm font-medium tabular-nums">
                 {tolerancePp === 0 ? 'Any' : `${tolerancePp.toFixed(1)}pp`}
               </span>
               <Button

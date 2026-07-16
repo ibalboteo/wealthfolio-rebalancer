@@ -52,7 +52,7 @@ export function AccountSelector({ className, ctx }: AccountSelectorProps) {
   // Render skeleton for loading state
   const renderSkeleton = () => {
     return (
-      <Button variant="outline" className="w-[240px] justify-between" disabled>
+      <Button variant="outline" className="w-60 justify-between" disabled>
         <div className="flex w-full items-center gap-2">
           <Skeleton className="h-4 w-4 rounded-full" />
           <Skeleton className="h-4 w-36" />
@@ -74,7 +74,7 @@ export function AccountSelector({ className, ctx }: AccountSelectorProps) {
         aria-expanded={open}
         size="sm"
         className={cn(
-          'flex h-10 items-center gap-1.5 rounded-full border-[1.5px] border-none bg-secondary/30 px-3 py-1 text-sm font-medium hover:bg-muted/80',
+          'flex h-10 items-center gap-1.5 rounded-full border-none bg-secondary/30 px-3 py-1 text-sm font-medium hover:bg-muted/80',
           className
         )}
       >
