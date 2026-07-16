@@ -43,6 +43,26 @@ function formatDrift(driftPp: number): string {
   return `${sign}${driftPp.toFixed(1)}pp`;
 }
 
+// Self-contained responsive rules for the allocation table. Injected via a
+// <style> tag (not Tailwind breakpoint classes) because the host stylesheet
+// only ships the utility variants the host app itself uses, so `md:`/`xl:`
+// variants can silently no-op inside the addon. Below 768px each fund stacks:
+// name (+drift) on its own line, full-width bar, then a Now/Target line.
+const ALLOCATION_TABLE_CSS = `
+.rb-ao-row { display: flex; align-items: center; gap: 0.75rem; }
+.rb-ao-name { display: flex; min-width: 0; flex: 1 1 0%; align-items: center; gap: 0.5rem; }
+.rb-ao-bar { flex: 1 1 0%; }
+.rb-ao-drift-m, .rb-ao-values-m { display: none; }
+@media (max-width: 767px) {
+  .rb-ao-header { display: none; }
+  .rb-ao-row { flex-direction: column; align-items: stretch; gap: 0.5rem; }
+  .rb-ao-name { flex: 1 1 auto; }
+  .rb-ao-bar { flex: none; width: 100%; }
+  .rb-ao-cell { display: none; }
+  .rb-ao-drift-m { display: block; }
+  .rb-ao-values-m { display: flex; }
+}`;
+
 export function AllocationOverview({
   holdings,
   previewHoldings,
@@ -109,12 +129,13 @@ export function AllocationOverview({
               </div>
 
               <div className="min-w-0">
-                <div className="text-muted-foreground flex items-center gap-3 px-2 pb-2 text-[10px] font-medium uppercase tracking-wider">
-                  <span className="flex-1">Fund</span>
-                  <span className="flex-1">Allocation</span>
-                  <span className="w-14 text-right">Now</span>
-                  <span className="w-12 text-right">Target</span>
-                  <span className="w-14 text-right">Drift</span>
+                <style>{ALLOCATION_TABLE_CSS}</style>
+                <div className="rb-ao-header rb-ao-row text-muted-foreground px-2 pb-2 text-[10px] font-medium uppercase tracking-wider">
+                  <span className="rb-ao-name">Fund</span>
+                  <span className="rb-ao-bar">Allocation</span>
+                  <span className="rb-ao-cell w-14 text-right">Now</span>
+                  <span className="rb-ao-cell w-12 text-right">Target</span>
+                  <span className="rb-ao-cell w-14 text-right">Drift</span>
                 </div>
 
                 <div>
@@ -125,14 +146,14 @@ export function AllocationOverview({
                       <button
                         type="button"
                         key={row.id}
-                        className="flex w-full cursor-default items-center gap-3 rounded-sm px-2 py-2.5 text-left transition-colors"
+                        className="rb-ao-row w-full cursor-default rounded-sm px-2 py-2.5 text-left transition-colors"
                         style={{ backgroundColor: isHovered ? `${rowColor}22` : undefined }}
                         onMouseEnter={() => setHoveredId(row.id)}
                         onMouseLeave={() => setHoveredId(null)}
                         onFocus={() => setHoveredId(row.id)}
                         onBlur={() => setHoveredId(null)}
                       >
-                        <div className="flex min-w-0 flex-1 items-center gap-2">
+                        <div className="rb-ao-name">
                           <span
                             className="h-2.5 w-2.5 shrink-0 rounded-sm"
                             style={{ background: rowColor }}
@@ -143,9 +164,17 @@ export function AllocationOverview({
                           >
                             {row.name}
                           </span>
+                          <span
+                            className={cn(
+                              'rb-ao-drift-m shrink-0 text-[12px] font-semibold tabular-nums',
+                              driftColor(row.status)
+                            )}
+                          >
+                            {formatDrift(row.driftPp)}
+                          </span>
                         </div>
 
-                        <div className="h-2 flex-1">
+                        <div className="rb-ao-bar h-2">
                           <div className="bg-muted relative h-2 rounded-full">
                             <span
                               className="absolute top-0 h-full rounded-full opacity-70"
@@ -164,15 +193,30 @@ export function AllocationOverview({
                           </div>
                         </div>
 
-                        <span className="text-foreground w-14 shrink-0 text-right text-[12px] font-semibold tabular-nums">
+                        <div className="rb-ao-values-m justify-between text-[11px] text-muted-foreground tabular-nums">
+                          <span>
+                            Now{' '}
+                            <span className="text-foreground font-medium">
+                              {row.currentPct.toFixed(1)}%
+                            </span>
+                          </span>
+                          <span>
+                            Target{' '}
+                            <span className="text-foreground font-medium">
+                              {row.targetPct.toFixed(0)}%
+                            </span>
+                          </span>
+                        </div>
+
+                        <span className="rb-ao-cell text-foreground w-14 text-right text-[12px] font-semibold tabular-nums">
                           {row.currentPct.toFixed(1)}%
                         </span>
-                        <span className="text-muted-foreground w-12 shrink-0 text-right text-[12px] font-medium tabular-nums">
+                        <span className="rb-ao-cell text-muted-foreground w-12 text-right text-[12px] font-medium tabular-nums">
                           {row.targetPct.toFixed(0)}%
                         </span>
                         <span
                           className={cn(
-                            'w-14 shrink-0 text-right text-[12px] font-semibold tabular-nums',
+                            'rb-ao-cell w-14 text-right text-[12px] font-semibold tabular-nums',
                             driftColor(row.status)
                           )}
                         >
