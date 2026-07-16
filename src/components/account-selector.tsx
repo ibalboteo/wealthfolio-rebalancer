@@ -74,7 +74,7 @@ export function AccountSelector({ className, ctx }: AccountSelectorProps) {
         aria-expanded={open}
         size="sm"
         className={cn(
-          'flex h-10 items-center gap-1.5 rounded-full border-none bg-secondary/30 px-3 py-1 text-sm font-medium hover:bg-muted/80',
+          'flex h-10 items-center gap-1.5 rounded-full border-none bg-secondary px-3 py-1 text-sm font-medium hover:bg-muted',
           className
         )}
       >

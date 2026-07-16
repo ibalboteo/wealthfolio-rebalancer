@@ -132,7 +132,7 @@ export function HoldingPlanner({ ctx, onSave }: HoldingPlannerProps) {
                 aria-label={`Target allocation for ${holding.instrument?.symbol || holding.holdingType}`}
                 onChange={(e) => handleTargetChange(idx, e.target.valueAsNumber)}
                 className={cn('w-24 text-right', {
-                  'bg-muted/40 text-muted-foreground': !formState[idx]?.enabled,
+                  'bg-muted text-muted-foreground': !formState[idx]?.enabled,
                 })}
                 placeholder="0.00"
               />

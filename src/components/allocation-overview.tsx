@@ -239,7 +239,7 @@ export function AllocationOverview({
             ) : (
               <ul className="space-y-3">
                 {gaps.slice(0, 3).map((row, index) => (
-                  <li key={row.id} className="bg-muted/35 rounded-lg px-3.5 py-3">
+                  <li key={row.id} className="bg-muted rounded-lg px-3.5 py-3">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex min-w-0 items-center gap-2.5">
                         <span
@@ -272,7 +272,7 @@ export function AllocationOverview({
                   </li>
                 ))}
                 {gaps.length > 3 && (
-                  <li className="bg-muted/20 text-muted-foreground rounded-lg px-3.5 py-2.5 text-xs">
+                  <li className="bg-muted text-muted-foreground rounded-lg px-3.5 py-2.5 text-xs">
                     <span className="text-foreground font-medium">
                       +{gaps.length - 3} more off target
                     </span>
