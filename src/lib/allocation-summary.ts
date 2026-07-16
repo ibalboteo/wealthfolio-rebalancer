@@ -19,6 +19,11 @@ export function sumEnabledValue(holdings: PlannedHolding[]): number {
   return holdings.reduce((sum, h) => (h.plan?.enabled ? sum + h.marketValue.base : sum), 0);
 }
 
+/** Current allocation percentage of a value against a total; 0 when total is 0. */
+export function currentPct(value: number, total: number): number {
+  return total > 0 ? (value / total) * 100 : 0;
+}
+
 function classify(driftPp: number, tolerancePp: number): AllocationStatus {
   if (Math.abs(driftPp) <= tolerancePp) return 'in_band';
   return driftPp > 0 ? 'overweight' : 'underweight';
@@ -37,15 +42,15 @@ export function buildAllocationSummary(
   return holdings
     .filter((h) => h.plan?.enabled)
     .map((h) => {
-      const currentPct = totalValue > 0 ? (h.marketValue.base / totalValue) * 100 : 0;
+      const current = currentPct(h.marketValue.base, totalValue);
       const targetPct = h.plan?.target ?? 0;
-      const driftPp = currentPct - targetPct;
+      const driftPp = current - targetPct;
       return {
         id: h.id,
         symbol: h.instrument?.symbol ?? h.holdingType,
         name: h.instrument?.name ?? h.instrument?.symbol ?? h.holdingType,
         value: h.marketValue.base,
-        currentPct,
+        currentPct: current,
         targetPct,
         driftPp,
         status: classify(driftPp, tolerancePp),

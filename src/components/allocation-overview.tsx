@@ -128,6 +128,8 @@ export function AllocationOverview({
                         style={{ backgroundColor: isHovered ? `${rowColor}22` : undefined }}
                         onMouseEnter={() => setHoveredId(row.id)}
                         onMouseLeave={() => setHoveredId(null)}
+                        onFocus={() => setHoveredId(row.id)}
+                        onBlur={() => setHoveredId(null)}
                       >
                         <div className="col-span-4 flex min-w-0 items-center gap-2">
                           <span

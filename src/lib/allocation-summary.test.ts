@@ -3,9 +3,19 @@ import { describe, expect, it } from 'vitest';
 import type { PlannedHolding } from '../hooks/use-holdings';
 import {
   buildAllocationSummary,
+  currentPct,
   selectAllocationGaps,
   sumEnabledValue,
 } from './allocation-summary';
+
+describe('currentPct', () => {
+  it('computes percentage of value against total', () => {
+    expect(currentPct(25, 100)).toBe(25);
+  });
+  it('returns 0 when total is 0', () => {
+    expect(currentPct(25, 0)).toBe(0);
+  });
+});
 
 function holding(args: {
   id: string;

@@ -33,7 +33,7 @@ import {
   useRebalance,
   useTolerance,
 } from '../hooks/use-rebalance';
-import { addonName, sumEnabledValue, useSelectedAccount } from '../lib';
+import { addonName, currentPct, sumEnabledValue, useSelectedAccount } from '../lib';
 
 interface EditPlanSheetProps {
   ctx: AddonContext;
@@ -110,7 +110,7 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
     () => new Set(rebalancePlan?.transfers.flatMap(({ from, to }) => [from.id, to.id]) ?? []),
     [rebalancePlan?.transfers]
   );
-  const totalEnabledValue = rebalancePlan?.totalPreviewValue ?? 0;
+  const totalEnabledValue = useMemo(() => sumEnabledValue(holdings), [holdings]);
 
   // A holding is "on target" only when it is enabled, not part of a transfer,
   // AND its actual deviation from target is within the configured tolerance.
@@ -119,9 +119,8 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
       hasPlan
         ? holdings.filter((h) => {
             if (!h.plan?.enabled || transferIds.has(h.id)) return false;
-            const currentPct =
-              totalEnabledValue > 0 ? (h.marketValue.base / totalEnabledValue) * 100 : 0;
-            return Math.abs(currentPct - (h.plan?.target ?? 0)) <= tolerancePp;
+            const pct = currentPct(h.marketValue.base, totalEnabledValue);
+            return Math.abs(pct - (h.plan?.target ?? 0)) <= tolerancePp;
           })
         : [],
     [hasPlan, holdings, transferIds, totalEnabledValue, tolerancePp]
@@ -133,9 +132,8 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
       hasPlan
         ? holdings.filter((h) => {
             if (!h.plan?.enabled || transferIds.has(h.id)) return false;
-            const currentPct =
-              totalEnabledValue > 0 ? (h.marketValue.base / totalEnabledValue) * 100 : 0;
-            return Math.abs(currentPct - (h.plan?.target ?? 0)) > tolerancePp;
+            const pct = currentPct(h.marketValue.base, totalEnabledValue);
+            return Math.abs(pct - (h.plan?.target ?? 0)) > tolerancePp;
           })
         : [],
     [hasPlan, holdings, transferIds, totalEnabledValue, tolerancePp]
@@ -309,7 +307,7 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
           <AllocationOverview
             holdings={holdings}
             previewHoldings={rebalancePlan?.previewHoldings ?? holdings}
-            totalEnabledValue={sumEnabledValue(holdings)}
+            totalEnabledValue={totalEnabledValue}
             totalPreviewValue={rebalancePlan?.totalPreviewValue ?? 0}
             tolerancePp={tolerancePp}
             currency={holdings[0]?.baseCurrency ?? 'USD'}

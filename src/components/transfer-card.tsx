@@ -1,7 +1,7 @@
 import { AmountDisplay, Card, cn, Icons, Skeleton } from '@wealthfolio/ui';
 import { m, useReducedMotion } from 'framer-motion';
 import type { PlannedHolding } from '../hooks/use-holdings';
-import type { RebalanceAction } from '../lib';
+import { currentPct as currentPctOf, type RebalanceAction } from '../lib';
 import { TickerAvatar } from './ticker-avatar';
 
 const cardBase = 'rounded-lg border p-6 flex flex-col gap-4 h-64';
@@ -62,7 +62,7 @@ export function HoldingCard(props: HoldingCardProps) {
   if (props.status === 'on-target') {
     const { holding, totalPortfolioValue } = props;
     const total = totalPortfolioValue;
-    const currentPct = total > 0 ? (holding.marketValue.base / total) * 100 : 0;
+    const currentPct = currentPctOf(holding.marketValue.base, total);
     const targetPct = holding.plan?.target ?? 0;
     const deviation = currentPct - targetPct;
     const deviationLabel = `${deviation >= 0 ? '+' : ''}${deviation.toFixed(1)}pp`;
@@ -106,7 +106,7 @@ export function HoldingCard(props: HoldingCardProps) {
   if (props.status === 'drifted') {
     const { holding, totalPortfolioValue } = props;
     const total = totalPortfolioValue;
-    const currentPct = total > 0 ? (holding.marketValue.base / total) * 100 : 0;
+    const currentPct = currentPctOf(holding.marketValue.base, total);
     const targetPct = holding.plan?.target ?? 0;
     const deviation = currentPct - targetPct;
     const deviationLabel = `${deviation >= 0 ? '+' : ''}${deviation.toFixed(1)}pp`;

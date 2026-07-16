@@ -21,7 +21,7 @@ Rebalancer fills that gap: it compares your current holdings against a plan you 
 | **Configurable threshold** | Ignore deviations below a chosen threshold (0–20 pp, step 0.5) — only act when it's worth it |
 | **Per-transfer contribution** | Each transfer card shows how many percentage points that specific transfer moves |
 | **Current vs Target preview** | A side panel compares every position: current %, target %, projected value, and ±pp deviation |
-| **Overview tab** | A donut, a current-vs-target table (with target markers) and a *Biggest gaps* summary, plus an *Actual ↔ After rebalance* toggle to preview the portfolio once the suggested transfers are applied |
+| **Overview tab** | A donut, a current-vs-target table (with target markers) and a *Biggest gaps* summary, plus a *Current ↔ After rebalance* toggle to preview the portfolio once the suggested transfers are applied |
 | **Colour-coded deviations** | Blue = underweight, Red = overweight, Green = within threshold |
 | **Multi-account support** | Switch between accounts; plan and threshold are persisted per-account and globally |
 | **Instant UI sync** | Changes to the plan or threshold reflect immediately without a page reload |
@@ -34,7 +34,7 @@ Rebalancer fills that gap: it compares your current holdings against a plan you 
 2. **Create a plan** — open *Edit Plan* and assign target percentages to each holding. All enabled targets must sum to 100%.
 3. **Set a threshold** (optional) — use the **Rebalance threshold** stepper in *Edit Plan* to ignore deviations smaller than X pp.
 4. **Review transfer cards** — on the **Transfers** tab, each card shows the SOURCE fund, the DESTINATION fund, and the exact amount to transfer.
-5. **Open the Overview tab** — see the full allocation breakdown: a donut, a current-vs-target table (current % → target %, ±pp deviation) and the *Biggest gaps*. Toggle *Actual ↔ After rebalance* to preview the result of the suggested transfers.
+5. **Open the Overview tab** — see the full allocation breakdown: a donut, a current-vs-target table (current % → target %, ±pp deviation) and the *Biggest gaps*. Toggle *Current ↔ After rebalance* to preview the result of the suggested transfers.
 6. **Execute manually** — place the transfers through your fund provider and record them in Wealthfolio.
 
 ### Threshold example
