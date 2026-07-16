@@ -39,8 +39,9 @@ function driftColor(status: AllocationStatus): string {
 }
 
 function formatDrift(driftPp: number): string {
-  const sign = driftPp > 0 ? '+' : '';
-  return `${sign}${driftPp.toFixed(1)}pp`;
+  const rounded = Math.round(driftPp * 10) / 10;
+  if (rounded === 0) return '0.0pp';
+  return `${rounded > 0 ? '+' : ''}${rounded.toFixed(1)}pp`;
 }
 
 // Self-contained responsive rules for the allocation table. Injected via a

@@ -85,6 +85,17 @@ describe('buildAllocationSummary', () => {
     expect(rows.every((r) => r.status === 'in_band')).toBe(true);
   });
 
+  it('treats a drift that rounds to 0.0pp as in_band even at zero tolerance', () => {
+    // Floating-point residue after rebalancing: 50.03% vs 50% target = 0.03pp,
+    // which displays as "0.0pp" and must not be coloured over/underweight.
+    const holdings = [
+      holding({ id: 'a', symbol: 'A', value: 50.03, target: 50 }),
+      holding({ id: 'b', symbol: 'B', value: 49.97, target: 50 }),
+    ];
+    const rows = buildAllocationSummary(holdings, 100, 0);
+    expect(rows.every((r) => r.status === 'in_band')).toBe(true);
+  });
+
   it('excludes disabled holdings', () => {
     const holdings = [
       holding({ id: 'a', symbol: 'A', value: 60, target: 100 }),

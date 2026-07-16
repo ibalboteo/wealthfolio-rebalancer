@@ -25,8 +25,12 @@ export function currentPct(value: number, total: number): number {
 }
 
 function classify(driftPp: number, tolerancePp: number): AllocationStatus {
-  if (Math.abs(driftPp) <= tolerancePp) return 'in_band';
-  return driftPp > 0 ? 'overweight' : 'underweight';
+  // Compare the drift as it is displayed (rounded to 0.1pp) so the colour and
+  // status match the number the user sees. Without this, floating-point residue
+  // after rebalancing shows a "0.0pp" drift still classified over/underweight.
+  const displayedDrift = Math.round(driftPp * 10) / 10;
+  if (Math.abs(displayedDrift) <= tolerancePp) return 'in_band';
+  return displayedDrift > 0 ? 'overweight' : 'underweight';
 }
 
 /**
