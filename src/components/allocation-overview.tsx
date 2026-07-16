@@ -43,11 +43,6 @@ function formatDrift(driftPp: number): string {
   return `${sign}${driftPp.toFixed(1)}pp`;
 }
 
-// Single-row table columns: name | allocation bar | now | target | drift.
-// Declared inline (not a `grid-cols-[…]` arbitrary class) because arbitrary
-// Tailwind values are not reliably generated in the addon bundle.
-const TABLE_COLS = 'minmax(0,1fr) minmax(5rem,1.2fr) 3rem 3rem 3.75rem';
-
 export function AllocationOverview({
   holdings,
   previewHoldings,
@@ -88,8 +83,8 @@ export function AllocationOverview({
         </ToggleGroup>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-        <Card className="h-full">
+      <div className="grid gap-6 xl:grid-cols-3">
+        <Card className="h-full xl:col-span-2">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Allocation vs target</CardTitle>
             <CardDescription>
@@ -99,7 +94,7 @@ export function AllocationOverview({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid items-center gap-6 pt-2 xl:grid-cols-[260px_minmax(0,1fr)]">
+            <div className="flex flex-col gap-6 pt-2 xl:flex-row xl:items-center">
               <div className="mx-auto shrink-0">
                 <AllocationDonut
                   rows={rows}
@@ -113,16 +108,13 @@ export function AllocationOverview({
                 />
               </div>
 
-              <div className="min-w-0">
-                <div
-                  className="text-muted-foreground grid gap-x-3 px-2 pb-2 text-[10px] font-medium uppercase tracking-wider"
-                  style={{ gridTemplateColumns: TABLE_COLS }}
-                >
-                  <span>Fund</span>
-                  <span>Allocation</span>
-                  <span className="text-right">Now</span>
-                  <span className="text-right">Target</span>
-                  <span className="text-right">Drift</span>
+              <div className="min-w-0 xl:flex-1">
+                <div className="text-muted-foreground hidden items-center gap-3 px-2 pb-2 text-[10px] font-medium uppercase tracking-wider md:flex">
+                  <span className="flex-1">Fund</span>
+                  <span className="flex-1">Allocation</span>
+                  <span className="w-14 text-right">Now</span>
+                  <span className="w-12 text-right">Target</span>
+                  <span className="w-14 text-right">Drift</span>
                 </div>
 
                 <div>
@@ -133,30 +125,35 @@ export function AllocationOverview({
                       <button
                         type="button"
                         key={row.id}
-                        className="grid w-full cursor-default items-center gap-x-3 rounded-sm px-2 py-2.5 text-left transition-colors"
-                        style={{
-                          gridTemplateColumns: TABLE_COLS,
-                          backgroundColor: isHovered ? `${rowColor}22` : undefined,
-                        }}
+                        className="flex w-full cursor-default flex-col gap-2 rounded-sm px-2 py-2.5 text-left transition-colors md:flex-row md:items-center md:gap-3"
+                        style={{ backgroundColor: isHovered ? `${rowColor}22` : undefined }}
                         onMouseEnter={() => setHoveredId(row.id)}
                         onMouseLeave={() => setHoveredId(null)}
                         onFocus={() => setHoveredId(row.id)}
                         onBlur={() => setHoveredId(null)}
                       >
-                        <div className="flex min-w-0 items-center gap-2">
+                        <div className="flex min-w-0 items-center gap-2 md:flex-1">
                           <span
                             className="h-2.5 w-2.5 shrink-0 rounded-sm"
                             style={{ background: rowColor }}
                           />
                           <span
-                            className="text-foreground truncate text-[12.5px] font-semibold"
+                            className="text-foreground flex-1 truncate text-[12.5px] font-semibold"
                             title={row.name}
                           >
                             {row.name}
                           </span>
+                          <span
+                            className={cn(
+                              'shrink-0 text-[12px] font-semibold tabular-nums md:hidden',
+                              driftColor(row.status)
+                            )}
+                          >
+                            {formatDrift(row.driftPp)}
+                          </span>
                         </div>
 
-                        <div className="h-2">
+                        <div className="h-2 w-full md:w-auto md:flex-1">
                           <div className="bg-muted relative h-2 rounded-full">
                             <span
                               className="absolute top-0 h-full rounded-full opacity-70"
@@ -175,15 +172,30 @@ export function AllocationOverview({
                           </div>
                         </div>
 
-                        <span className="text-foreground text-right text-[12px] font-semibold tabular-nums">
+                        <div className="flex justify-between text-[11px] text-muted-foreground tabular-nums md:hidden">
+                          <span>
+                            Now{' '}
+                            <span className="text-foreground font-medium">
+                              {row.currentPct.toFixed(1)}%
+                            </span>
+                          </span>
+                          <span>
+                            Target{' '}
+                            <span className="text-foreground font-medium">
+                              {row.targetPct.toFixed(0)}%
+                            </span>
+                          </span>
+                        </div>
+
+                        <span className="text-foreground hidden w-14 text-right text-[12px] font-semibold tabular-nums md:block">
                           {row.currentPct.toFixed(1)}%
                         </span>
-                        <span className="text-muted-foreground text-right text-[12px] font-medium tabular-nums">
+                        <span className="text-muted-foreground hidden w-12 text-right text-[12px] font-medium tabular-nums md:block">
                           {row.targetPct.toFixed(0)}%
                         </span>
                         <span
                           className={cn(
-                            'text-right text-[12px] font-semibold tabular-nums',
+                            'hidden w-14 text-right text-[12px] font-semibold tabular-nums md:block',
                             driftColor(row.status)
                           )}
                         >
