@@ -102,7 +102,7 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
   const rebalancePlan = useRebalance(holdings, tolerancePp / 100);
   const configurationRequired = useConfigure(holdings);
   const prefersReducedMotion = usePrefersReducedMotion();
-  const [view, setView] = useState<'transfers' | 'status' | 'projected'>('transfers');
+  const [view, setView] = useState<'transfers' | 'status' | 'projected'>('status');
 
   const hasHoldings = holdings.length > 0;
   const hasPlan = hasHoldings && !configurationRequired;
@@ -207,8 +207,8 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
           value={view}
           onValueChange={(v) => setView(v as 'transfers' | 'status' | 'projected')}
           items={[
-            { value: 'transfers', label: 'Transfers' },
             { value: 'status', label: 'Status' },
+            { value: 'transfers', label: 'Transfers' },
             { value: 'projected', label: 'Projected' },
           ]}
         />
@@ -261,6 +261,7 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
               tolerancePp={tolerancePp}
               currency={holdings[0]?.baseCurrency ?? 'USD'}
               mode={view === 'projected' ? 'projected' : 'current'}
+              onNavigateToTransfers={() => setView('transfers')}
             />
           </div>
         )}

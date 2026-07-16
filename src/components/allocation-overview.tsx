@@ -1,5 +1,6 @@
 // src/components/allocation-overview.tsx
 import {
+  Button,
   Card,
   CardContent,
   CardDescription,
@@ -7,6 +8,7 @@ import {
   CardTitle,
   cn,
   formatCompactAmount,
+  Icons,
 } from '@wealthfolio/ui';
 import { useMemo, useState } from 'react';
 import type { PlannedHolding } from '../hooks/use-holdings';
@@ -29,6 +31,7 @@ export interface AllocationOverviewProps {
   tolerancePp: number;
   currency: string;
   mode: AllocationMode;
+  onNavigateToTransfers?: () => void;
 }
 
 function driftColor(status: AllocationStatus): string {
@@ -71,6 +74,7 @@ export function AllocationOverview({
   tolerancePp,
   currency,
   mode,
+  onNavigateToTransfers,
 }: AllocationOverviewProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const reducedMotion = usePrefersReducedMotion();
@@ -280,6 +284,19 @@ export function AllocationOverview({
                   </li>
                 )}
               </ul>
+            )}
+            {mode === 'current' && gaps.length > 0 && onNavigateToTransfers && (
+              <div className="mt-auto pt-4">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="w-full"
+                  onClick={onNavigateToTransfers}
+                >
+                  View transfers to rebalance
+                  <Icons.ArrowRight className="ml-1.5 h-4 w-4" />
+                </Button>
+              </div>
             )}
           </CardContent>
         </Card>
