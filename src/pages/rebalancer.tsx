@@ -1,5 +1,6 @@
 import type { AddonContext } from '@wealthfolio/addon-sdk';
 import {
+  AnimatedToggleGroup,
   Button,
   Icons,
   Sheet,
@@ -8,10 +9,6 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
 } from '@wealthfolio/ui';
 import { Suspense, useMemo, useState } from 'react';
 import {
@@ -204,65 +201,68 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
         </div>
       )}
 
-      <Tabs
-        value={view}
-        onValueChange={(v) => setView(v as 'transfers' | 'overview')}
-        className="flex flex-1 min-h-0 flex-col gap-4"
-      >
-        <TabsList className="self-start">
-          <TabsTrigger value="transfers">Transfers</TabsTrigger>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-        </TabsList>
+      <div className="flex flex-1 min-h-0 flex-col gap-4">
+        <AnimatedToggleGroup
+          className="self-start"
+          value={view}
+          onValueChange={(v) => setView(v as 'transfers' | 'overview')}
+          items={[
+            { value: 'transfers', label: 'Transfers' },
+            { value: 'overview', label: 'Overview' },
+          ]}
+        />
 
-        <TabsContent value="transfers" className="flex-1 min-h-0 overflow-y-auto">
-          {(rebalancePlan?.transfers.length ?? 0) === 0 ? (
-            <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
-              <Icons.CheckCircle className="h-6 w-6 text-success" />
-              <p className="text-lg font-light text-muted-foreground max-w-md">
-                Your portfolio is on target — no transfers needed.
-              </p>
-            </div>
-          ) : (
-            <>
-              <style>{FADE_IN_UP_KEYFRAMES}</style>
-              <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-fr">
-                {rebalancePlan?.transfers.map(({ from, to, amount, currency }, index) => (
-                  <li
-                    key={`${from.id}-${to.id}`}
-                    style={
-                      prefersReducedMotion
-                        ? undefined
-                        : {
-                            animation: `${FADE_IN_UP} 0.3s ease-out both`,
-                            animationDelay: `${index * 0.04}s`,
-                          }
-                    }
-                  >
-                    <HoldingCard
-                      status="transfer"
-                      from={from}
-                      to={to}
-                      amount={amount}
-                      currency={currency}
-                    />
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-        </TabsContent>
-
-        <TabsContent value="overview" className="flex-1 min-h-0">
-          <AllocationOverview
-            holdings={holdings}
-            previewHoldings={rebalancePlan?.previewHoldings ?? holdings}
-            totalEnabledValue={totalEnabledValue}
-            totalPreviewValue={rebalancePlan?.totalPreviewValue ?? 0}
-            tolerancePp={tolerancePp}
-            currency={holdings[0]?.baseCurrency ?? 'USD'}
-          />
-        </TabsContent>
-      </Tabs>
+        {view === 'transfers' ? (
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            {(rebalancePlan?.transfers.length ?? 0) === 0 ? (
+              <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
+                <Icons.CheckCircle className="h-6 w-6 text-success" />
+                <p className="text-lg font-light text-muted-foreground max-w-md">
+                  Your portfolio is on target — no transfers needed.
+                </p>
+              </div>
+            ) : (
+              <>
+                <style>{FADE_IN_UP_KEYFRAMES}</style>
+                <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-fr">
+                  {rebalancePlan?.transfers.map(({ from, to, amount, currency }, index) => (
+                    <li
+                      key={`${from.id}-${to.id}`}
+                      style={
+                        prefersReducedMotion
+                          ? undefined
+                          : {
+                              animation: `${FADE_IN_UP} 0.3s ease-out both`,
+                              animationDelay: `${index * 0.04}s`,
+                            }
+                      }
+                    >
+                      <HoldingCard
+                        status="transfer"
+                        from={from}
+                        to={to}
+                        amount={amount}
+                        currency={currency}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </div>
+        ) : (
+          <div className="flex-1 min-h-0">
+            <AllocationOverview
+              holdings={holdings}
+              previewHoldings={rebalancePlan?.previewHoldings ?? holdings}
+              totalEnabledValue={totalEnabledValue}
+              totalPreviewValue={rebalancePlan?.totalPreviewValue ?? 0}
+              tolerancePp={tolerancePp}
+              currency={holdings[0]?.baseCurrency ?? 'USD'}
+            />
+          </div>
+        )}
+      </div>
     </>
   );
 }

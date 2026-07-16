@@ -1,5 +1,6 @@
 // src/components/allocation-overview.tsx
 import {
+  AnimatedToggleGroup,
   Card,
   CardContent,
   CardDescription,
@@ -7,8 +8,6 @@ import {
   CardTitle,
   cn,
   formatCompactAmount,
-  ToggleGroup,
-  ToggleGroupItem,
 } from '@wealthfolio/ui';
 import { useMemo, useState } from 'react';
 import type { PlannedHolding } from '../hooks/use-holdings';
@@ -92,16 +91,14 @@ export function AllocationOverview({
   return (
     <div className="flex-1 min-h-0 overflow-y-auto space-y-6">
       <div className="flex justify-end">
-        <ToggleGroup
-          type="single"
+        <AnimatedToggleGroup
           value={mode}
-          onValueChange={(v) => v && setMode(v as Mode)}
-          size="sm"
-          variant="outline"
-        >
-          <ToggleGroupItem value="current">Current</ToggleGroupItem>
-          <ToggleGroupItem value="projected">After rebalance</ToggleGroupItem>
-        </ToggleGroup>
+          onValueChange={(v) => setMode(v as Mode)}
+          items={[
+            { value: 'current', label: 'Current' },
+            { value: 'projected', label: 'Projected' },
+          ]}
+        />
       </div>
 
       <div className="grid gap-6">
