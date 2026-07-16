@@ -32,15 +32,12 @@
     "release:major": "pnpm version major && git push --follow-tags"
   },
   "dependencies": {
-    "@radix-ui/react-avatar": "^1.2.2",
     "@tanstack/react-query": "^5.101.2",
     "@wealthfolio/addon-sdk": "^3.6.2",
     "@wealthfolio/ui": "^3.6.2",
-    "change-case": "^5.4.4",
     "framer-motion": "^12.42.2",
     "react": "^19.2.7",
-    "react-dom": "^19.2.7",
-    "sonner": "^2.0.7"
+    "react-dom": "^19.2.7"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.3",

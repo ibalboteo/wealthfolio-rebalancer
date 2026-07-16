@@ -13,7 +13,6 @@ import {
   TabsList,
   TabsTrigger,
 } from '@wealthfolio/ui';
-import { pascalCase } from 'change-case';
 import { domAnimation, LazyMotion, m, useReducedMotion } from 'framer-motion';
 import { Suspense, useMemo, useState } from 'react';
 import {
@@ -272,7 +271,7 @@ export function Rebalancer({ ctx }: { ctx: AddonContext }) {
     <div className="p-6 flex flex-col h-full gap-6">
       <ApplicationHeader
         className="shrink-0"
-        heading={pascalCase(addonName)}
+        heading={`${addonName.charAt(0).toUpperCase()}${addonName.slice(1)}`}
         text="Identify tax-free transfers to keep your portfolio on target"
       >
         <AccountSelector ctx={ctx} />

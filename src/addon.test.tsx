@@ -1,10 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { addonMainRouteId, addonName } from './lib/constants';
 
-vi.mock('./components/toaster', () => ({
-  Toaster: () => null,
-}));
-
 vi.mock('./lib/account-provider', () => ({
   SelectedAccountProvider: ({ children }: { children: unknown }) => children,
 }));
