@@ -124,7 +124,7 @@ export function AllocationOverview({
                 <div className="rb-ao-header rb-ao-row text-muted-foreground px-2 pb-2 text-[10px] font-medium uppercase tracking-wider">
                   <span className="rb-ao-name">Fund</span>
                   <span className="rb-ao-bar">Allocation</span>
-                  <span className="rb-ao-cell w-14 text-right">Now</span>
+                  <span className="rb-ao-cell w-16 text-right">Current</span>
                   <span className="rb-ao-cell w-12 text-right">Target</span>
                   <span className="rb-ao-cell w-14 text-right">Drift</span>
                 </div>
@@ -186,7 +186,7 @@ export function AllocationOverview({
 
                         <div className="rb-ao-values-m justify-between text-[11px] text-muted-foreground tabular-nums">
                           <span>
-                            Now{' '}
+                            Current{' '}
                             <span className="text-foreground font-medium">
                               {row.currentPct.toFixed(1)}%
                             </span>
@@ -199,7 +199,7 @@ export function AllocationOverview({
                           </span>
                         </div>
 
-                        <span className="rb-ao-cell text-foreground w-14 text-right text-[12px] font-semibold tabular-nums">
+                        <span className="rb-ao-cell text-foreground w-16 text-right text-[12px] font-semibold tabular-nums">
                           {row.currentPct.toFixed(1)}%
                         </span>
                         <span className="rb-ao-cell text-muted-foreground w-12 text-right text-[12px] font-medium tabular-nums">
