@@ -1,4 +1,6 @@
 export * from './account-selector';
+export * from './allocation-donut';
+export * from './allocation-overview';
 export * from './avatar';
 export * from './header';
 export * from './holding-planner';
