@@ -38,10 +38,10 @@
     "@tanstack/react-query": "^5.101.2",
     "@wealthfolio/addon-sdk": "^3.6.2",
     "@wealthfolio/ui": "^3.6.2",
-    "i18next": "^26.3.6",
+    "i18next": "^25.6.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "react-i18next": "^17.0.10"
+    "react-i18next": "^16.0.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.3",
