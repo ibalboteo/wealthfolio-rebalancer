@@ -20,6 +20,7 @@ import {
   selectAllocationGaps,
 } from '../lib/allocation-summary';
 import { AllocationDonut } from './allocation-donut';
+import styles from './allocation-overview.module.css';
 
 export type AllocationMode = 'current' | 'projected';
 
@@ -45,26 +46,6 @@ function formatDrift(driftPp: number): string {
   if (rounded === 0) return '0.0pp';
   return `${rounded > 0 ? '+' : ''}${rounded.toFixed(1)}pp`;
 }
-
-// Self-contained responsive rules for the allocation table. Injected via a
-// <style> tag (not Tailwind breakpoint classes) because the host stylesheet
-// only ships the utility variants the host app itself uses, so `md:`/`xl:`
-// variants can silently no-op inside the addon. Below 768px each fund stacks:
-// name (+drift) on its own line, full-width bar, then a Now/Target line.
-const ALLOCATION_TABLE_CSS = `
-.rb-ao-row { display: flex; align-items: center; gap: 0.75rem; }
-.rb-ao-name { display: flex; min-width: 0; flex: 1 1 0%; align-items: center; gap: 0.5rem; }
-.rb-ao-bar { flex: 1 1 0%; }
-.rb-ao-drift-m, .rb-ao-values-m { display: none; }
-@media (max-width: 767px) {
-  .rb-ao-header { display: none; }
-  .rb-ao-row { flex-direction: column; align-items: stretch; gap: 0.5rem; }
-  .rb-ao-name { flex: 1 1 auto; }
-  .rb-ao-bar { flex: none; width: 100%; }
-  .rb-ao-cell { display: none; }
-  .rb-ao-drift-m { display: block; }
-  .rb-ao-values-m { display: flex; }
-}`;
 
 export function AllocationOverview({
   holdings,
@@ -120,13 +101,18 @@ export function AllocationOverview({
               </div>
 
               <div className="min-w-0">
-                <style>{ALLOCATION_TABLE_CSS}</style>
-                <div className="rb-ao-header rb-ao-row text-muted-foreground px-2 pb-2 text-xs font-medium uppercase tracking-wider">
-                  <span className="rb-ao-name">Fund</span>
-                  <span className="rb-ao-bar">Allocation</span>
-                  <span className="rb-ao-cell w-16 text-right">Current</span>
-                  <span className="rb-ao-cell w-12 text-right">Target</span>
-                  <span className="rb-ao-cell w-14 text-right">Drift</span>
+                <div
+                  className={cn(
+                    styles.header,
+                    styles.row,
+                    'text-muted-foreground px-2 pb-2 text-xs font-medium uppercase tracking-wider'
+                  )}
+                >
+                  <span className={styles.name}>Fund</span>
+                  <span className={styles.bar}>Allocation</span>
+                  <span className={cn(styles.cell, 'w-16 text-right')}>Current</span>
+                  <span className={cn(styles.cell, 'w-12 text-right')}>Target</span>
+                  <span className={cn(styles.cell, 'w-14 text-right')}>Drift</span>
                 </div>
 
                 <div>
@@ -137,7 +123,10 @@ export function AllocationOverview({
                       <button
                         type="button"
                         key={row.id}
-                        className="rb-ao-row w-full cursor-default rounded-sm px-2 py-2.5 text-left transition-colors"
+                        className={cn(
+                          styles.row,
+                          'w-full cursor-default rounded-sm px-2 py-2.5 text-left transition-colors'
+                        )}
                         style={{
                           backgroundColor: isHovered
                             ? `color-mix(in srgb, ${rowColor} 13%, transparent)`
@@ -148,7 +137,7 @@ export function AllocationOverview({
                         onFocus={() => setHoveredId(row.id)}
                         onBlur={() => setHoveredId(null)}
                       >
-                        <div className="rb-ao-name">
+                        <div className={styles.name}>
                           <span
                             className="h-2.5 w-2.5 shrink-0 rounded-sm"
                             style={{ background: rowColor }}
@@ -161,7 +150,8 @@ export function AllocationOverview({
                           </span>
                           <span
                             className={cn(
-                              'rb-ao-drift-m shrink-0 text-xs font-semibold tabular-nums',
+                              styles.driftMobile,
+                              'shrink-0 text-xs font-semibold tabular-nums',
                               driftColor(row.status)
                             )}
                           >
@@ -169,7 +159,7 @@ export function AllocationOverview({
                           </span>
                         </div>
 
-                        <div className="rb-ao-bar h-2">
+                        <div className={cn(styles.bar, 'h-2')}>
                           <div className="bg-muted relative h-2 rounded-full">
                             <span
                               className="absolute top-0 h-full rounded-full opacity-70"
@@ -188,7 +178,12 @@ export function AllocationOverview({
                           </div>
                         </div>
 
-                        <div className="rb-ao-values-m justify-between text-xs text-muted-foreground tabular-nums">
+                        <div
+                          className={cn(
+                            styles.valuesMobile,
+                            'justify-between text-xs text-muted-foreground tabular-nums'
+                          )}
+                        >
                           <span>
                             Current{' '}
                             <span className="text-foreground font-medium">
@@ -203,15 +198,26 @@ export function AllocationOverview({
                           </span>
                         </div>
 
-                        <span className="rb-ao-cell text-foreground w-16 text-right text-xs font-semibold tabular-nums">
+                        <span
+                          className={cn(
+                            styles.cell,
+                            'text-foreground w-16 text-right text-xs font-semibold tabular-nums'
+                          )}
+                        >
                           {row.currentPct.toFixed(1)}%
                         </span>
-                        <span className="rb-ao-cell text-muted-foreground w-12 text-right text-xs font-medium tabular-nums">
+                        <span
+                          className={cn(
+                            styles.cell,
+                            'text-muted-foreground w-12 text-right text-xs font-medium tabular-nums'
+                          )}
+                        >
                           {row.targetPct.toFixed(0)}%
                         </span>
                         <span
                           className={cn(
-                            'rb-ao-cell w-14 text-right text-xs font-semibold tabular-nums',
+                            styles.cell,
+                            'w-14 text-right text-xs font-semibold tabular-nums',
                             driftColor(row.status)
                           )}
                         >

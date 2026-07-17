@@ -1,5 +1,6 @@
-import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
+import cssInjectedByJsPlugin from 'vite-plugin-css-injected-by-js';
 
 const hostProvidedDependencies: string[] = [
   '@tanstack/react-query',
@@ -26,6 +27,9 @@ export default defineConfig(({ mode }) => ({
         plugins: mode === 'production' ? [['babel-plugin-react-compiler']] : [],
       },
     }),
+    // The host loads only dist/addon.js, so inline any imported CSS (incl.
+    // CSS Modules) into the JS and inject it at runtime into the addon iframe.
+    cssInjectedByJsPlugin(),
   ],
   define: {
     'process.env.NODE_ENV': JSON.stringify(mode === 'production' ? 'production' : 'development'),

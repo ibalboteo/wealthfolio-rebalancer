@@ -1,0 +1,24 @@
+/* Staggered entrance for transfer cards. Scoped CSS Module, inlined + injected
+   into the addon iframe by the build. Per-card delay is set inline. */
+
+.card {
+  animation: fade-in-up 0.3s ease-out both;
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    animation: none;
+  }
+}

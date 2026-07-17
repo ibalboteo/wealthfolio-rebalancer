@@ -20,7 +20,6 @@ import {
 } from '../components';
 import { HoldingCardSkeleton } from '../components/transfer-card';
 import { useSuspenseHoldings } from '../hooks/use-holdings';
-import { usePrefersReducedMotion } from '../hooks/use-prefers-reduced-motion';
 import {
   TOLERANCE_MAX,
   TOLERANCE_MIN,
@@ -30,12 +29,7 @@ import {
   useTolerance,
 } from '../hooks/use-rebalance';
 import { addonName, sumEnabledValue, useSelectedAccount } from '../lib';
-
-const FADE_IN_UP = 'rebalancer-fade-in-up';
-const FADE_IN_UP_KEYFRAMES = `@keyframes ${FADE_IN_UP} {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: none; }
-}`;
+import styles from './rebalancer.module.css';
 
 interface EditPlanSheetProps {
   ctx: AddonContext;
@@ -101,7 +95,6 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
   const [tolerancePp, setTolerancePp] = useTolerance(ctx);
   const rebalancePlan = useRebalance(holdings, tolerancePp / 100);
   const configurationRequired = useConfigure(holdings);
-  const prefersReducedMotion = usePrefersReducedMotion();
   const [view, setView] = useState<'transfers' | 'current' | 'projected'>('transfers');
 
   const hasHoldings = holdings.length > 0;
@@ -223,32 +216,23 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
                 </p>
               </div>
             ) : (
-              <>
-                <style>{FADE_IN_UP_KEYFRAMES}</style>
-                <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-fr">
-                  {rebalancePlan?.transfers.map(({ from, to, amount, currency }, index) => (
-                    <li
-                      key={`${from.id}-${to.id}`}
-                      style={
-                        prefersReducedMotion
-                          ? undefined
-                          : {
-                              animation: `${FADE_IN_UP} 0.3s ease-out both`,
-                              animationDelay: `${index * 0.04}s`,
-                            }
-                      }
-                    >
-                      <HoldingCard
-                        status="transfer"
-                        from={from}
-                        to={to}
-                        amount={amount}
-                        currency={currency}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              </>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-fr">
+                {rebalancePlan?.transfers.map(({ from, to, amount, currency }, index) => (
+                  <li
+                    key={`${from.id}-${to.id}`}
+                    className={styles.card}
+                    style={{ animationDelay: `${index * 0.04}s` }}
+                  >
+                    <HoldingCard
+                      status="transfer"
+                      from={from}
+                      to={to}
+                      amount={amount}
+                      currency={currency}
+                    />
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
         ) : (

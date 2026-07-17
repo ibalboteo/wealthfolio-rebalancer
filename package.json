@@ -51,6 +51,7 @@
     "lefthook": "^2.1.10",
     "typescript": "^5.9.3",
     "vite": "^7.3.6",
+    "vite-plugin-css-injected-by-js": "4.0.1",
     "vitest": "^4.1.10"
   },
   "pnpm": {
