@@ -1,1 +1,57 @@
-{}
+{
+  "account": {
+    "noAccounts": "",
+    "searchPlaceholder": "",
+    "select": "",
+    "selectPrompt": ""
+  },
+  "controls": {
+    "any": "",
+    "decreaseThreshold": "",
+    "increaseThreshold": "",
+    "pp": "",
+    "threshold": ""
+  },
+  "holdings": {
+    "addTransactions": "",
+    "empty": ""
+  },
+  "overview": {
+    "aboveTarget": "",
+    "belowTarget": "",
+    "biggestGaps": "",
+    "colAllocation": "",
+    "colCurrent": "",
+    "colDrift": "",
+    "colFund": "",
+    "colTarget": "",
+    "gapsSubtitleAll": "",
+    "gapsSubtitleThreshold": "",
+    "subtitleCurrent": "",
+    "subtitleProjected": "",
+    "title": ""
+  },
+  "plan": {
+    "configurePrompt": "",
+    "corrupted": "",
+    "create": "",
+    "description": "",
+    "edit": ""
+  },
+  "planner": {
+    "enableAria": "",
+    "save": "",
+    "saveError": "",
+    "sumError": "",
+    "targetAria": ""
+  },
+  "transfers": {
+    "onTarget": "",
+    "pctTooltip": ""
+  },
+  "view": {
+    "current": "",
+    "projected": "",
+    "transfers": ""
+  }
+}

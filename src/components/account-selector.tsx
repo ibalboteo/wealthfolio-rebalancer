@@ -16,6 +16,7 @@ import {
 } from '@wealthfolio/ui';
 import type { ComponentType, SVGProps } from 'react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAccounts } from '../hooks';
 import { useSelectedAccount } from '../lib/account-provider';
 
@@ -32,6 +33,7 @@ interface AccountSelectorProps {
 }
 
 export function AccountSelector({ className, ctx }: AccountSelectorProps) {
+  const { t } = useTranslation();
   const { selectedAccount, setSelectedAccount } = useSelectedAccount();
   const [open, setOpen] = useState(false);
   const { data: accounts = [], isLoading } = useAccounts({
@@ -89,7 +91,9 @@ export function AccountSelector({ className, ctx }: AccountSelectorProps) {
               <span>{selectedAccount.name}</span>
             </>
           ) : (
-            <span className="text-muted-foreground">Select an account</span>
+            <span className="text-muted-foreground">
+              {t('account.select', 'Select an account')}
+            </span>
           )}
         </div>
         <Icons.ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -109,7 +113,7 @@ export function AccountSelector({ className, ctx }: AccountSelectorProps) {
         }}
       >
         <Command className="w-full">
-          <CommandInput placeholder="Search accounts..." />
+          <CommandInput placeholder={t('account.searchPlaceholder', 'Search accounts...')} />
           <CommandList>
             {isLoading ? (
               <div className="px-2 py-6 text-center">
@@ -122,7 +126,7 @@ export function AccountSelector({ className, ctx }: AccountSelectorProps) {
               </div>
             ) : (
               <>
-                <CommandEmpty>No accounts found.</CommandEmpty>
+                <CommandEmpty>{t('account.noAccounts', 'No accounts found.')}</CommandEmpty>
                 {sortedGroups.map(([type, typeAccounts]) => (
                   <CommandGroup key={type} heading={type}>
                     {typeAccounts.map((account) => {

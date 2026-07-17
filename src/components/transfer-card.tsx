@@ -1,4 +1,5 @@
 import { AmountDisplay, Card, cn, Icons, Skeleton } from '@wealthfolio/ui';
+import { useTranslation } from 'react-i18next';
 import type { RebalanceAction } from '../lib';
 import { TickerAvatar } from './ticker-avatar';
 
@@ -32,6 +33,7 @@ type TransferCardProps = RebalanceAction & {
 };
 
 export function HoldingCard(props: TransferCardProps) {
+  const { t } = useTranslation();
   const { from, to, amount, currency } = props;
   const transferPct =
     from.marketValue.base > 0 ? Math.min(100, (amount / from.marketValue.base) * 100) : 0;
@@ -56,7 +58,7 @@ export function HoldingCard(props: TransferCardProps) {
           <AmountDisplay value={amount} currency={currency} className="text-xl font-bold" />
           <span
             className="text-sm font-medium text-muted-foreground tabular-nums"
-            title="Percentage of the source fund being transferred"
+            title={t('transfers.pctTooltip', 'Percentage of the source fund being transferred')}
           >
             {transferPct.toFixed(1)}%
           </span>

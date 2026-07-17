@@ -11,6 +11,7 @@ import {
   Icons,
 } from '@wealthfolio/ui';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { PlannedHolding } from '../hooks/use-holdings';
 import { usePrefersReducedMotion } from '../hooks/use-prefers-reduced-motion';
 import { allocationColorFor, buildAllocationColorMap } from '../lib/allocation-colors';
@@ -57,6 +58,7 @@ export function AllocationOverview({
   mode,
   onNavigateToTransfers,
 }: AllocationOverviewProps) {
+  const { t } = useTranslation();
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const reducedMotion = usePrefersReducedMotion();
 
@@ -78,11 +80,19 @@ export function AllocationOverview({
       <div className="grid gap-6">
         <Card className="h-full min-w-0">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Allocation vs target</CardTitle>
+            <CardTitle className="text-base">
+              {t('overview.title', 'Allocation vs target')}
+            </CardTitle>
             <CardDescription>
               {mode === 'current'
-                ? 'Current allocation of each fund versus its target.'
-                : 'Projected allocation after applying the suggested transfers.'}
+                ? t(
+                    'overview.subtitleCurrent',
+                    'Current allocation of each fund versus its target.'
+                  )
+                : t(
+                    'overview.subtitleProjected',
+                    'Projected allocation after applying the suggested transfers.'
+                  )}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -108,11 +118,17 @@ export function AllocationOverview({
                     'text-muted-foreground px-2 pb-2 text-xs font-medium uppercase tracking-wider'
                   )}
                 >
-                  <span className={styles.name}>Fund</span>
-                  <span className={styles.bar}>Allocation</span>
-                  <span className={cn(styles.cell, 'w-16 text-right')}>Current</span>
-                  <span className={cn(styles.cell, 'w-12 text-right')}>Target</span>
-                  <span className={cn(styles.cell, 'w-14 text-right')}>Drift</span>
+                  <span className={styles.name}>{t('overview.colFund', 'Fund')}</span>
+                  <span className={styles.bar}>{t('overview.colAllocation', 'Allocation')}</span>
+                  <span className={cn(styles.cell, 'w-16 text-right')}>
+                    {t('overview.colCurrent', 'Current')}
+                  </span>
+                  <span className={cn(styles.cell, 'w-12 text-right')}>
+                    {t('overview.colTarget', 'Target')}
+                  </span>
+                  <span className={cn(styles.cell, 'w-14 text-right')}>
+                    {t('overview.colDrift', 'Drift')}
+                  </span>
                 </div>
 
                 <div>
@@ -234,11 +250,13 @@ export function AllocationOverview({
 
         <Card className="flex h-full min-w-0 flex-col">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Biggest gaps</CardTitle>
+            <CardTitle className="text-base">{t('overview.biggestGaps', 'Biggest gaps')}</CardTitle>
             <CardDescription>
               {tolerancePp === 0
-                ? 'Funds off target, largest deviation first.'
-                : `Funds beyond the ${tolerancePp.toFixed(1)}pp threshold.`}
+                ? t('overview.gapsSubtitleAll', 'Funds off target, largest deviation first.')
+                : t('overview.gapsSubtitleThreshold', 'Funds beyond the {{value}}pp threshold.', {
+                    value: tolerancePp.toFixed(1),
+                  })}
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-1 flex-col">
@@ -275,8 +293,10 @@ export function AllocationOverview({
                       </span>
                     </div>
                     <p className="text-muted-foreground mt-2 pl-7 text-xs">
-                      {row.status === 'overweight' ? 'Above target' : 'Below target'} ·{' '}
-                      {row.currentPct.toFixed(1)}% vs {row.targetPct.toFixed(0)}% ·{' '}
+                      {row.status === 'overweight'
+                        ? t('overview.aboveTarget', 'Above target')
+                        : t('overview.belowTarget', 'Below target')}{' '}
+                      · {row.currentPct.toFixed(1)}% vs {row.targetPct.toFixed(0)}% ·{' '}
                       {formatCompactAmount(row.value, currency)}
                     </p>
                   </li>

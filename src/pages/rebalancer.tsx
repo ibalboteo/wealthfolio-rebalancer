@@ -11,6 +11,7 @@ import {
   SheetTrigger,
 } from '@wealthfolio/ui';
 import { Suspense, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   AccountSelector,
   AllocationOverview,
@@ -38,8 +39,10 @@ interface EditPlanSheetProps {
   compact?: boolean;
 }
 
-export function EditPlanSheet({ ctx, label = 'Edit Plan', compact = false }: EditPlanSheetProps) {
+export function EditPlanSheet({ ctx, label, compact = false }: EditPlanSheetProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
+  const resolvedLabel = label ?? t('plan.edit', 'Edit Plan');
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -51,15 +54,17 @@ export function EditPlanSheet({ ctx, label = 'Edit Plan', compact = false }: Edi
           className="flex items-center gap-2"
         >
           <Icons.Settings className="h-4 w-4" />
-          {compact ? <span className="hidden sm:inline">{label}</span> : label}
+          {compact ? <span className="hidden sm:inline">{resolvedLabel}</span> : resolvedLabel}
         </Button>
       </SheetTrigger>
       <SheetContent className="w-full sm:max-w-lg flex flex-col h-full">
         <SheetHeader className="shrink-0">
-          <SheetTitle>Edit Plan</SheetTitle>
+          <SheetTitle>{t('plan.edit', 'Edit Plan')}</SheetTitle>
           <SheetDescription>
-            Define your target allocations — the addon will calculate the optimal transfers to reach
-            them.
+            {t(
+              'plan.description',
+              'Define your target allocations — the addon will calculate the optimal transfers to reach them.'
+            )}
           </SheetDescription>
         </SheetHeader>
 
@@ -92,6 +97,7 @@ interface RebalancerContentProps {
 }
 
 function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
+  const { t } = useTranslation();
   const { data: holdings } = useSuspenseHoldings({ accountId, ctx });
   const [tolerancePp, setTolerancePp] = useTolerance(ctx);
   const rebalancePlan = useRebalance(holdings, tolerancePp / 100);
@@ -107,14 +113,14 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
     return (
       <div className="flex flex-col items-center justify-center flex-1 min-h-0 gap-6">
         <p className="text-lg font-light text-muted-foreground">
-          No holdings found in this account.
+          {t('holdings.empty', 'No holdings found in this account.')}
         </p>
         <Button
           onClick={() => ctx.api.navigation.navigate('/activities')}
           className="flex items-center gap-2"
         >
           <Icons.Plus className="h-4 w-4" />
-          Add Transactions
+          {t('holdings.addTransactions', 'Add Transactions')}
         </Button>
       </div>
     );
@@ -126,11 +132,13 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
         <div className="flex flex-col items-center gap-3 text-center max-w-md">
           <Icons.AlertCircle className="h-6 w-6 text-muted-foreground" />
           <p className="text-lg font-light text-muted-foreground">
-            Set your target allocations to discover which transfers will bring your portfolio on
-            target.
+            {t(
+              'plan.configurePrompt',
+              'Set your target allocations to discover which transfers will bring your portfolio on target.'
+            )}
           </p>
         </div>
-        <EditPlanSheet ctx={ctx} label="Create Plan" />
+        <EditPlanSheet ctx={ctx} label={t('plan.create', 'Create Plan')} />
       </div>
     );
   }
@@ -149,10 +157,13 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
         <div className="flex flex-col items-center gap-3 text-center max-w-md">
           <Icons.AlertCircle className="h-6 w-6 text-muted-foreground" />
           <p className="text-lg font-light text-muted-foreground">
-            Your plan needs adjustment. Make sure enabled allocations add up to 100%.
+            {t(
+              'plan.corrupted',
+              'Your plan needs adjustment. Make sure enabled allocations add up to 100%.'
+            )}
           </p>
         </div>
-        <EditPlanSheet ctx={ctx} label="Edit Plan" />
+        <EditPlanSheet ctx={ctx} label={t('plan.edit', 'Edit Plan')} />
       </div>
     );
   }
@@ -162,7 +173,9 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
       {hasPlan && (
         <div className="flex items-center justify-between shrink-0 gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Threshold</span>
+            <span className="text-sm text-muted-foreground">
+              {t('controls.threshold', 'Threshold')}
+            </span>
             <div className="flex items-center gap-1">
               <Button
                 type="button"
@@ -171,12 +184,14 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
                 className="h-7 w-7"
                 onClick={() => setTolerancePp(tolerancePp - TOLERANCE_STEP)}
                 disabled={tolerancePp <= TOLERANCE_MIN}
-                aria-label="Decrease threshold"
+                aria-label={t('controls.decreaseThreshold', 'Decrease threshold')}
               >
                 <Icons.Minus className="h-3 w-3" />
               </Button>
               <span className="min-w-12 text-center text-sm font-medium tabular-nums">
-                {tolerancePp === 0 ? 'Any' : `${tolerancePp.toFixed(1)}pp`}
+                {tolerancePp === 0
+                  ? t('controls.any', 'Any')
+                  : t('controls.pp', '{{value}}pp', { value: tolerancePp.toFixed(1) })}
               </span>
               <Button
                 type="button"
@@ -185,7 +200,7 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
                 className="h-7 w-7"
                 onClick={() => setTolerancePp(tolerancePp + TOLERANCE_STEP)}
                 disabled={tolerancePp >= TOLERANCE_MAX}
-                aria-label="Increase threshold"
+                aria-label={t('controls.increaseThreshold', 'Increase threshold')}
               >
                 <Icons.Plus className="h-3 w-3" />
               </Button>
@@ -201,9 +216,9 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
           value={view}
           onValueChange={(v) => setView(v as 'transfers' | 'current' | 'projected')}
           items={[
-            { value: 'current', label: 'Current' },
-            { value: 'transfers', label: 'Transfers' },
-            { value: 'projected', label: 'Projected' },
+            { value: 'current', label: t('view.current', 'Current') },
+            { value: 'transfers', label: t('view.transfers', 'Transfers') },
+            { value: 'projected', label: t('view.projected', 'Projected') },
           ]}
         />
 
@@ -213,7 +228,7 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
               <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
                 <Icons.CheckCircle className="h-6 w-6 text-success" />
                 <p className="text-lg font-light text-muted-foreground max-w-md">
-                  Your portfolio is on target — no transfers needed.
+                  {t('transfers.onTarget', 'Your portfolio is on target — no transfers needed.')}
                 </p>
               </div>
             ) : (
@@ -257,6 +272,7 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
 
 export function Rebalancer({ ctx }: { ctx: AddonContext }) {
   useHostLanguage(ctx);
+  const { t } = useTranslation();
   const { selectedAccount } = useSelectedAccount();
 
   return (
@@ -272,7 +288,10 @@ export function Rebalancer({ ctx }: { ctx: AddonContext }) {
       {!selectedAccount ? (
         <div className="flex items-center justify-center flex-1 min-h-0">
           <p className="text-lg font-light text-muted-foreground text-center max-w-md">
-            Please select an account to identify transfer opportunities.
+            {t(
+              'account.selectPrompt',
+              'Please select an account to identify transfer opportunities.'
+            )}
           </p>
         </div>
       ) : (

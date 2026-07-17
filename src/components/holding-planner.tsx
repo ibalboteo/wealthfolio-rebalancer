@@ -2,6 +2,7 @@ import type { AddonContext } from '@wealthfolio/addon-sdk';
 import { Button, cn, Icons, Input, Switch } from '@wealthfolio/ui';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { type HoldingPlanData, useHoldings, useUpdateHolding } from '../hooks';
 import { useSelectedAccount } from '../lib/account-provider';
 import { TickerAvatar } from './ticker-avatar';
@@ -12,6 +13,7 @@ export interface HoldingPlannerProps {
 }
 
 export function HoldingPlanner({ ctx, onSave }: HoldingPlannerProps) {
+  const { t } = useTranslation();
   const { selectedAccount } = useSelectedAccount();
   const accountId = selectedAccount?.id ?? '';
   const { data: holdings } = useHoldings({
@@ -59,13 +61,18 @@ export function HoldingPlanner({ ctx, onSave }: HoldingPlannerProps) {
   const handleSubmit = (e?: FormEvent) => {
     e?.preventDefault();
     if (!isBalanced) {
-      setValidationError(`Enabled targets sum to ${roundedTotal.toFixed(2)}%, must equal 100%`);
+      setValidationError(
+        t('planner.sumError', 'Enabled targets sum to {{total}}%, must equal 100%', {
+          total: roundedTotal.toFixed(2),
+        })
+      );
       return;
     }
     setValidationError(null);
     mutation.mutate(formState, {
       onSuccess: () => onSave?.(),
-      onError: () => setValidationError('Failed to save the plan. Please try again.'),
+      onError: () =>
+        setValidationError(t('planner.saveError', 'Failed to save the plan. Please try again.')),
     });
   };
 
@@ -129,7 +136,9 @@ export function HoldingPlanner({ ctx, onSave }: HoldingPlannerProps) {
                 max={100}
                 step={0.1}
                 defaultValue={holding.plan.target}
-                aria-label={`Target allocation for ${holding.instrument?.symbol || holding.holdingType}`}
+                aria-label={t('planner.targetAria', 'Target allocation for {{name}}', {
+                  name: holding.instrument?.symbol || holding.holdingType,
+                })}
                 onChange={(e) => handleTargetChange(idx, e.target.valueAsNumber)}
                 className={cn('w-24 text-right', {
                   'bg-muted text-muted-foreground': !formState[idx]?.enabled,
@@ -139,7 +148,9 @@ export function HoldingPlanner({ ctx, onSave }: HoldingPlannerProps) {
             </fieldset>
             <Switch
               checked={formState[idx]?.enabled ?? false}
-              aria-label={`Enable ${holding.instrument?.symbol || holding.holdingType} in the plan`}
+              aria-label={t('planner.enableAria', 'Enable {{name}} in the plan', {
+                name: holding.instrument?.symbol || holding.holdingType,
+              })}
               onCheckedChange={(checked) => handleEnabledChange(idx, checked)}
             />
           </div>
@@ -169,7 +180,7 @@ export function HoldingPlanner({ ctx, onSave }: HoldingPlannerProps) {
           disabled={mutation.isPending || !isBalanced}
         >
           {mutation.isPending ? <Icons.Loader className="h-4 w-4 animate-spin mr-2" /> : null}
-          Save
+          {t('planner.save', 'Save')}
         </Button>
       </div>
     </form>
