@@ -1,63 +1,63 @@
 {
   "account": {
-    "noAccounts": "",
-    "searchPlaceholder": "",
-    "select": "",
-    "selectPrompt": ""
+    "noAccounts": "Keine Konten gefunden.",
+    "searchPlaceholder": "Konten suchen...",
+    "select": "Konto auswählen",
+    "selectPrompt": "Bitte wählen Sie ein Konto, um Übertragungsmöglichkeiten zu ermitteln."
   },
   "controls": {
-    "any": "",
-    "decreaseThreshold": "",
-    "increaseThreshold": "",
-    "pp": "",
-    "threshold": ""
+    "any": "Beliebig",
+    "decreaseThreshold": "Schwellenwert verringern",
+    "increaseThreshold": "Schwellenwert erhöhen",
+    "pp": "{{value}} pp",
+    "threshold": "Schwellenwert"
   },
   "header": {
-    "subtitle": ""
+    "subtitle": "Steuerfreie Übertragungen finden, um Ihr Portfolio im Ziel zu halten"
   },
   "holdings": {
-    "addTransactions": "",
-    "empty": ""
+    "addTransactions": "Transaktionen hinzufügen",
+    "empty": "Keine Positionen in diesem Konto gefunden."
   },
   "overview": {
-    "aboveTarget": "",
-    "belowTarget": "",
-    "biggestGaps": "",
-    "colAllocation": "",
-    "colCurrent": "",
-    "colDrift": "",
-    "colFund": "",
-    "colTarget": "",
-    "gapsEmpty": "",
-    "gapsSubtitleAll": "",
-    "gapsSubtitleThreshold": "",
-    "moreOffTarget": "",
-    "subtitleCurrent": "",
-    "subtitleProjected": "",
-    "title": "",
-    "viewTransfers": ""
+    "aboveTarget": "Über dem Ziel",
+    "belowTarget": "Unter dem Ziel",
+    "biggestGaps": "Größte Abweichungen",
+    "colAllocation": "Allokation",
+    "colCurrent": "Aktuell",
+    "colDrift": "Abweichung",
+    "colFund": "Fonds",
+    "colTarget": "Ziel",
+    "gapsEmpty": "Alles ist im Ziel. Keine Aktion erforderlich.",
+    "gapsSubtitleAll": "Fonds außerhalb des Ziels, größte Abweichung zuerst.",
+    "gapsSubtitleThreshold": "Fonds über dem Schwellenwert von {{value}} pp.",
+    "moreOffTarget": "+{{n}} weitere außerhalb des Ziels",
+    "subtitleCurrent": "Aktuelle Allokation jedes Fonds im Vergleich zu seinem Ziel.",
+    "subtitleProjected": "Prognostizierte Allokation nach Anwendung der vorgeschlagenen Übertragungen.",
+    "title": "Allokation vs. Ziel",
+    "viewTransfers": "Übertragungen zum Rebalancing anzeigen"
   },
   "plan": {
-    "configurePrompt": "",
-    "corrupted": "",
-    "create": "",
-    "description": "",
-    "edit": ""
+    "configurePrompt": "Legen Sie Ihre Zielallokationen fest, um herauszufinden, welche Übertragungen Ihr Portfolio ins Ziel bringen.",
+    "corrupted": "Ihr Plan muss angepasst werden. Stellen Sie sicher, dass die aktivierten Allokationen 100 % ergeben.",
+    "create": "Plan erstellen",
+    "description": "Legen Sie Ihre Zielallokationen fest — das Add-on berechnet die optimalen Übertragungen, um sie zu erreichen.",
+    "edit": "Plan bearbeiten"
   },
   "planner": {
-    "enableAria": "",
-    "save": "",
-    "saveError": "",
-    "sumError": "",
-    "targetAria": ""
+    "enableAria": "{{name}} im Plan aktivieren",
+    "save": "Speichern",
+    "saveError": "Der Plan konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.",
+    "sumError": "Aktivierte Zielwerte ergeben {{total}} %, müssen aber 100 % ergeben",
+    "targetAria": "Zielallokation für {{name}}"
   },
   "transfers": {
-    "onTarget": "",
-    "pctTooltip": ""
+    "onTarget": "Ihr Portfolio ist im Ziel — keine Übertragungen nötig.",
+    "pctTooltip": "Prozentsatz des übertragenen Quellfonds"
   },
   "view": {
-    "current": "",
-    "projected": "",
-    "transfers": ""
+    "current": "Aktuell",
+    "projected": "Prognostiziert",
+    "transfers": "Übertragungen"
   }
 }

@@ -38,4 +38,12 @@ describe('AccountSelector i18n (English)', () => {
     const text = await renderIn('en', ctx, <AccountSelector ctx={ctx} />);
     expect(text).toContain('Select an account');
   });
+
+  it('renders the Spanish empty-selection label', async () => {
+    const ctx = {
+      api: { accounts: { getAll: () => Promise.resolve([]) } },
+    } as unknown as AddonContext;
+    const text = await renderIn('es', ctx, <AccountSelector ctx={ctx} />);
+    expect(text).toContain('Selecciona una cuenta');
+  });
 });
