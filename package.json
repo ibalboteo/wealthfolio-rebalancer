@@ -23,6 +23,9 @@
     "check": "biome check src/",
     "check:fix": "biome check --write src/",
     "type-check": "tsc --noEmit",
+    "i18n:extract": "i18next-cli extract --sync-primary",
+    "i18n:types": "i18next-cli types",
+    "i18n": "i18next-cli extract --sync-primary --with-types",
     "test": "vitest run",
     "prepare": "lefthook install",
     "version": "node -e \"const fs=require('fs'); const pkg=require('./package.json'); const manifest=require('./manifest.json'); manifest.version=pkg.version; fs.writeFileSync('manifest.json',JSON.stringify(manifest,null,2)+'\\n');\" && git add manifest.json",
@@ -35,8 +38,10 @@
     "@tanstack/react-query": "^5.101.2",
     "@wealthfolio/addon-sdk": "^3.6.2",
     "@wealthfolio/ui": "^3.6.2",
+    "i18next": "^26.3.6",
     "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "react-dom": "^19.2.7",
+    "react-i18next": "^17.0.10"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.3",
@@ -47,6 +52,7 @@
     "@vitest/ui": "^4.1.10",
     "@wealthfolio/addon-dev-tools": "^3.6.2",
     "babel-plugin-react-compiler": "^1.0.0",
+    "i18next-cli": "^1.66.2",
     "jsdom": "^29.1.1",
     "lefthook": "^2.1.10",
     "typescript": "^5.9.3",
