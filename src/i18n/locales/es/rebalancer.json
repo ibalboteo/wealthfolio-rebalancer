@@ -12,6 +12,9 @@
     "pp": "",
     "threshold": ""
   },
+  "header": {
+    "subtitle": ""
+  },
   "holdings": {
     "addTransactions": "",
     "empty": ""

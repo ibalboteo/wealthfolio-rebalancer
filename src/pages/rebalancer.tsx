@@ -280,7 +280,7 @@ export function Rebalancer({ ctx }: { ctx: AddonContext }) {
       <ApplicationHeader
         className="shrink-0"
         heading={`${addonName.charAt(0).toUpperCase()}${addonName.slice(1)}`}
-        text="Identify tax-free transfers to keep your portfolio on target"
+        text={t('header.subtitle', 'Identify tax-free transfers to keep your portfolio on target')}
       >
         <AccountSelector ctx={ctx} />
       </ApplicationHeader>

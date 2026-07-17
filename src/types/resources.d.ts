@@ -14,6 +14,9 @@ export default interface Resources {
       "pp": "{{value}}pp",
       "threshold": "Threshold"
     },
+    "header": {
+      "subtitle": "Identify tax-free transfers to keep your portfolio on target"
+    },
     "holdings": {
       "addTransactions": "Add Transactions",
       "empty": "No holdings found in this account."
