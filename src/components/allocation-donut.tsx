@@ -89,7 +89,11 @@ export function AllocationDonut({
               cornerRadius={CORNER_RADIUS}
               opacity={dimmed ? 0.3 : 1}
               transform={`translate(${tx}, ${ty})`}
-              style={{ transition: 'opacity 0.15s ease, transform 0.12s ease', cursor: 'pointer' }}
+              style={{
+                fill: s.color,
+                transition: 'opacity 0.15s ease, transform 0.12s ease',
+                cursor: 'pointer',
+              }}
               onMouseEnter={() => onHoverChange(s.row.id)}
               onMouseLeave={() => onHoverChange(null)}
             />

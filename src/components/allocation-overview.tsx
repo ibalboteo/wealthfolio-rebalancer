@@ -138,7 +138,11 @@ export function AllocationOverview({
                         type="button"
                         key={row.id}
                         className="rb-ao-row w-full cursor-default rounded-sm px-2 py-2.5 text-left transition-colors"
-                        style={{ backgroundColor: isHovered ? `${rowColor}22` : undefined }}
+                        style={{
+                          backgroundColor: isHovered
+                            ? `color-mix(in srgb, ${rowColor} 13%, transparent)`
+                            : undefined,
+                        }}
                         onMouseEnter={() => setHoveredId(row.id)}
                         onMouseLeave={() => setHoveredId(null)}
                         onFocus={() => setHoveredId(row.id)}
