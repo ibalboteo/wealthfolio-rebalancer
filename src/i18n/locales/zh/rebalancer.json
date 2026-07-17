@@ -1,0 +1,63 @@
+{
+  "account": {
+    "noAccounts": "未找到账户。",
+    "searchPlaceholder": "搜索账户...",
+    "select": "选择账户",
+    "selectPrompt": "请选择一个账户以识别转移机会。"
+  },
+  "controls": {
+    "any": "任意",
+    "decreaseThreshold": "降低阈值",
+    "increaseThreshold": "提高阈值",
+    "pp": "{{value}} 个百分点",
+    "threshold": "阈值"
+  },
+  "header": {
+    "subtitle": "找出免税转移，让您的投资组合保持在目标水平"
+  },
+  "holdings": {
+    "addTransactions": "添加交易",
+    "empty": "此账户中未找到持仓。"
+  },
+  "overview": {
+    "aboveTarget": "高于目标",
+    "belowTarget": "低于目标",
+    "biggestGaps": "最大差距",
+    "colAllocation": "配置",
+    "colCurrent": "当前",
+    "colDrift": "偏差",
+    "colFund": "基金",
+    "colTarget": "目标",
+    "gapsEmpty": "一切都在目标范围内。无需操作。",
+    "gapsSubtitleAll": "偏离目标的基金，偏差最大者优先。",
+    "gapsSubtitleThreshold": "超过 {{value}} 个百分点阈值的基金。",
+    "moreOffTarget": "还有 +{{n}} 个偏离目标",
+    "subtitleCurrent": "每只基金的当前配置与其目标的对比。",
+    "subtitleProjected": "应用建议转移后的预计配置。",
+    "title": "配置与目标对比",
+    "viewTransfers": "查看转移以重新平衡"
+  },
+  "plan": {
+    "configurePrompt": "设置您的目标配置，以发现哪些转移能让您的投资组合回到目标。",
+    "corrupted": "您的计划需要调整。请确保已启用的配置总和为 100%。",
+    "create": "创建计划",
+    "description": "设置您的目标配置——插件将计算达到目标的最优转移。",
+    "edit": "编辑计划"
+  },
+  "planner": {
+    "enableAria": "在计划中启用 {{name}}",
+    "save": "保存",
+    "saveError": "保存计划失败。请重试。",
+    "sumError": "已启用的目标总和为 {{total}}%，必须等于 100%",
+    "targetAria": "{{name}} 的目标配置"
+  },
+  "transfers": {
+    "onTarget": "您的投资组合已达目标——无需转移。",
+    "pctTooltip": "从源基金转出的百分比"
+  },
+  "view": {
+    "current": "当前",
+    "projected": "预计",
+    "transfers": "转移"
+  }
+}

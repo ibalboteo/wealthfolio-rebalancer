@@ -7,6 +7,11 @@ export interface RebalanceAction {
   currency: string;
 }
 
+export interface RebalanceOptions {
+  /** Minimum transfer amount; pairs below this are pruned. Default: 0.01 */
+  minTradeAmount?: number;
+}
+
 /**
  * Simulates the result of applying a list of rebalance transfers
  * to a given set of portfolio holdings, returning a new updated array.
@@ -54,123 +59,199 @@ export function simulateRebalance(
 }
 
 /**
- * Calculates the optimal set of transfers required to rebalance a portfolio
- * exactly to its target allocation, minimizing the total amount transferred.
+ * Two-tier band-based rebalancing algorithm.
  *
- * Implements the classic minimum-cost transportation algorithm (minimum-cost flow),
- * adapted for portfolios: distributes the excess from overweight holdings to underweight ones
- * until all are within the specified tolerance of their target percentage.
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * DESIGN: Adapted from Wealthfolio's TransferOptimizer (Rust)
+ * Reference: https://github.com/wealthfolio/wealthfolio/pull/1263
+ * ═══════════════════════════════════════════════════════════════════════════════
  *
- * - The `plan.target` field of each holding must be a number between 0 and 100 (target percentage).
- * - The `tolerance` parameter is a relative value (e.g., 0.01 means 1% allowed margin).
- * - Total portfolio value is conserved (sum before and after is equal).
- * - The result is deterministic and always optimal in terms of total amount transferred.
+ * ## Problem
+ *
+ * Naive exact-target rebalancing generates excessive transfers. If a portfolio
+ * drifts slightly, forcing every holding back to its exact target produces many
+ * small moves that are impractical (transaction costs, tax events, etc.).
+ *
+ * ## Solution: Band-Based Demand with Two-Tier Supply
+ *
+ * Instead of rebalancing to the exact target, transfers only bring underweight
+ * holdings to their **lower band edge** — the minimum acceptable allocation.
+ * This produces fewer and smaller transfers while keeping everything within the
+ * configured tolerance band.
+ *
+ * ### Band Geometry (per holding)
+ *
+ * ```
+ *   ┌─────────────────────────────────────────┐
+ *   │          OVERWEIGHT ZONE                 │  current > target
+ *   │          (Tier 1 supply = excess)        │
+ *   ├─────────── target_value ─────────────────┤
+ *   │          ACCEPTABLE ZONE                 │  lower_edge ≤ current ≤ target
+ *   │          (Tier 2 supply = headroom)      │
+ *   ├─────────── lower_edge ──────────────────┤  = target - band
+ *   │          UNDERWEIGHT ZONE                │  current < lower_edge
+ *   │          (Demand = deficit to edge)      │
+ *   └─────────────────────────────────────────┘
+ * ```
+ *
+ * - `target_value = (plan.target / 100) × total`
+ * - `band_value = tolerance × total`
+ * - `lower_edge = max(0, target_value - band_value)`
+ *
+ * ### Supply Tiers (who donates)
+ *
+ * - **Tier 1 (primary):** excess above TARGET from overweight holdings.
+ *   These holdings are already above their goal, so reducing them improves
+ *   the portfolio.
+ *
+ * - **Tier 2 (secondary):** headroom between lower_edge and target — only
+ *   used when Tier 1 alone doesn't cover all demand. This avoids worsening
+ *   holdings that are already at or below target unless absolutely necessary.
+ *
+ * ### Supply Selection Logic
+ *
+ * 1. If total demand = 0 → all within band, return []
+ * 2. If Tier 1 supply ≥ total demand → use only Tier 1 (minimal disruption)
+ * 3. Otherwise → merge Tier 1 + Tier 2 per holding
+ *
+ * **Mathematical note:** For portfolios with valid targets (summing to 100%),
+ * Tier 1 always covers demand. Proof: total_demand ≤ total_deficit - n×band,
+ * and total_deficit = total_excess = total_primary. Tier 2 is a safety net
+ * for edge cases (e.g., rounding, corrupted plans).
+ *
+ * ### Transportation (who gives to whom)
+ *
+ * Northwest-corner greedy matching:
+ * - Sort supply DESC (biggest donors first → fewer transfer pairs)
+ * - Sort demand DESC (biggest receivers first)
+ * - Deterministic tie-break by holding ID
+ * - Greedily match supply[i] → demand[j] until exhausted
+ *
+ * ### Post-processing
+ *
+ * Transfers below `minTradeAmount` are pruned (avoids impractical micro-moves).
+ *
+ * ## Tolerance Semantics
+ *
+ * - `tolerance = 0` → lower_edge = target → exact-target rebalancing (old behavior)
+ * - `tolerance = 0.05` → 5% band → only fix holdings that drifted >5% below target
  *
  * @param holdings Array of holdings with current value and target percentage (plan.target: 0-100)
- * @param tolerance Maximum allowed tolerance (e.g., 0.01 = 1%)
+ * @param tolerance Band width as a fraction of total portfolio value (e.g., 0.05 = 5%)
+ * @param options Optional configuration (minTradeAmount)
  * @returns Array of rebalance actions: { from, to, amount, currency }
- *
- * @example
- * const holdings = [
- *   { ... , marketValue: { base: 1200 }, plan: { target: 60 } },
- *   { ... , marketValue: { base: 800 }, plan: { target: 40 } },
- * ];
- * const transfers = calculateRebalanceActions(holdings, 0.01);
- * // => [{ from: ..., to: ..., amount: ... }]
  */
-
 export function calculateRebalanceActions(
   holdings: PlannedHolding[] | undefined,
-  tolerance: number
+  tolerance: number,
+  options?: RebalanceOptions
 ): RebalanceAction[] {
   if (!holdings) return [];
+
+  const minTradeAmount = options?.minTradeAmount ?? 0.01;
 
   // Only consider enabled holdings for rebalancing
   const enabledHoldings = holdings.filter((h) => h.plan?.enabled === true);
   if (enabledHoldings.length === 0) return [];
 
   const total = enabledHoldings.reduce((s, h) => s + h.marketValue.base, 0);
-  const margin = tolerance * total;
+  if (total <= 0) return [];
 
-  // Deviations (target es porcentaje 0-100)
-  const deviations = enabledHoldings.map((h) => h.marketValue.base - (h.plan.target / 100) * total);
+  const bandValue = tolerance * total;
 
-  // Portfolio-level check: if NO holding exceeds the tolerance, the portfolio is
-  // already balanced, nothing to do. This prevents the fragmented-excess bug
-  // where individual holdings each sit within tolerance but one is clearly off.
-  const anyOutOfTolerance = deviations.some((d) => Math.abs(d) > margin);
-  if (!anyOutOfTolerance) return [];
+  // Classify each holding into supply tiers and demand
+  const primarySupply: { idx: number; amount: number }[] = [];
+  const secondarySupply: { idx: number; amount: number }[] = [];
+  const demandEntries: { idx: number; amount: number }[] = [];
 
-  // Once we know action is needed, collect supply from ALL overweight holdings
-  // (not just those individually above the margin).  This is the fix for the
-  // case where excess is split across several holdings each below the threshold.
-  const excessIdx = deviations
-    .map((d, i) => ({ d, i }))
-    .filter((x) => x.d > 0)
-    .sort((a, b) => b.d - a.d);
-  const deficitIdx = deviations
-    .map((d, i) => ({ d, i }))
-    .filter((x) => x.d < 0)
-    .sort((a, b) => a.d - b.d);
+  for (let i = 0; i < enabledHoldings.length; i++) {
+    const h = enabledHoldings[i];
+    const targetValue = (h.plan.target / 100) * total;
+    const lowerEdge = Math.max(0, targetValue - bandValue);
+    const currentValue = h.marketValue.base;
 
-  if (!excessIdx.length || !deficitIdx.length) return [];
-
-  /** Build cost matrix: every valid transfer has cost = 1 per unit */
-  const n = excessIdx.length;
-  const m = deficitIdx.length;
-  const cost: number[][] = Array.from({ length: n }, () => Array(m).fill(1));
-
-  /** Demand/supply arrays */
-  const supply = excessIdx.map((e) => e.d);
-  const demand = deficitIdx.map((d) => -d.d);
-
-  /** Solve min-cost flow via simple transportation simplex */
-  const result = transportationSimplex(cost, supply, demand);
-
-  /** Convert to transfers */
-  const transfers: RebalanceAction[] = [];
-  for (let i = 0; i < n; i++) {
-    for (let j = 0; j < m; j++) {
-      const amount = result[i][j];
-      if (amount > 0.01) {
-        transfers.push({
-          from: enabledHoldings[excessIdx[i].i],
-          to: enabledHoldings[deficitIdx[j].i],
-          amount: Math.round(amount * 100) / 100,
-          currency: enabledHoldings[excessIdx[i].i].baseCurrency,
-        });
+    if (currentValue < lowerEdge) {
+      // Below lower band edge — needs inflow
+      demandEntries.push({ idx: i, amount: lowerEdge - currentValue });
+    } else if (currentValue > targetValue) {
+      // Above target — primary supply (excess over target)
+      primarySupply.push({ idx: i, amount: currentValue - targetValue });
+      // Also has secondary headroom (target down to lower edge)
+      const secondary = targetValue - lowerEdge;
+      if (secondary > 0) {
+        secondarySupply.push({ idx: i, amount: secondary });
+      }
+    } else {
+      // Between lower edge and target — secondary supply only
+      const secondary = currentValue - lowerEdge;
+      if (secondary > 0) {
+        secondarySupply.push({ idx: i, amount: secondary });
       }
     }
   }
 
-  return transfers;
-}
+  // If no demand, everything is within band — nothing to do
+  const totalDemand = demandEntries.reduce((s, e) => s + e.amount, 0);
+  if (totalDemand <= 0) return [];
 
-/**
- * Simplified transportation simplex algorithm
- * @param cost matrix of costs
- * @param supply supply array
- * @param demand demand array
- * @returns flow matrix x_ij
- */
-function transportationSimplex(_cost: number[][], supply: number[], demand: number[]): number[][] {
-  const n = supply.length;
-  const m = demand.length;
-  const x = Array.from({ length: n }, () => Array(m).fill(0));
-  let i = 0,
-    j = 0;
+  // If no supply at all, nothing to transfer (e.g. corrupted plan)
+  const totalPrimary = primarySupply.reduce((s, e) => s + e.amount, 0);
+  const totalSecondary = secondarySupply.reduce((s, e) => s + e.amount, 0);
+  if (totalPrimary + totalSecondary <= 0) return [];
 
-  // Northwest corner initialization (greedy feasible solution)
-  while (i < n && j < m) {
-    const qty = Math.min(supply[i], demand[j]);
-    x[i][j] = qty;
-    supply[i] -= qty;
-    demand[j] -= qty;
-    if (supply[i] === 0) i++;
-    if (demand[j] === 0) j++;
+  // Decide which supply tiers to use
+  let supplyEntries: { idx: number; amount: number }[];
+
+  if (totalPrimary >= totalDemand) {
+    // Tier 1 alone covers demand — only take from overweight holdings
+    supplyEntries = primarySupply;
+  } else {
+    // Tier 1 doesn't cover — combine with Tier 2
+    // Merge primary + secondary per holding index
+    const combined = new Map<number, number>();
+    for (const { idx, amount } of primarySupply) {
+      combined.set(idx, (combined.get(idx) ?? 0) + amount);
+    }
+    for (const { idx, amount } of secondarySupply) {
+      combined.set(idx, (combined.get(idx) ?? 0) + amount);
+    }
+    supplyEntries = Array.from(combined, ([idx, amount]) => ({ idx, amount }));
   }
 
-  // Because all costs = 1, this is already optimal.
-  // (If you add different costs, implement full simplex loop.)
-  return x;
+  // Sort supply by amount DESC (biggest donors first → fewer pairs),
+  // then holding id ASC for deterministic tie-break
+  supplyEntries.sort(
+    (a, b) =>
+      b.amount - a.amount || enabledHoldings[a.idx].id.localeCompare(enabledHoldings[b.idx].id)
+  );
+  demandEntries.sort(
+    (a, b) =>
+      b.amount - a.amount || enabledHoldings[a.idx].id.localeCompare(enabledHoldings[b.idx].id)
+  );
+
+  // Northwest-corner transportation: greedily match supply to demand
+  const supply = supplyEntries.map((e) => e.amount);
+  const demand = demandEntries.map((e) => e.amount);
+
+  const transfers: RebalanceAction[] = [];
+  let i = 0;
+  let j = 0;
+
+  while (i < supply.length && j < demand.length) {
+    const flow = Math.min(supply[i], demand[j]);
+    if (flow >= minTradeAmount) {
+      transfers.push({
+        from: enabledHoldings[supplyEntries[i].idx],
+        to: enabledHoldings[demandEntries[j].idx],
+        amount: Math.round(flow * 100) / 100,
+        currency: enabledHoldings[supplyEntries[i].idx].baseCurrency,
+      });
+    }
+    supply[i] -= flow;
+    demand[j] -= flow;
+    if (supply[i] <= 0) i++;
+    if (demand[j] <= 0) j++;
+  }
+
+  return transfers;
 }

@@ -1,0 +1,60 @@
+/* Responsive layout for the allocation table. Scoped CSS Module (class names are
+   hashed) so it never collides with the host, and it works because the plugin
+   inlines + injects it into the addon iframe. Below 768px each fund stacks:
+   name (+drift) on its own line, full-width bar, then a Current/Target line. */
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.name {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 0%;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.bar {
+  flex: 1 1 0%;
+}
+
+.driftMobile,
+.valuesMobile {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .header {
+    display: none;
+  }
+
+  .row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .name {
+    flex: 1 1 auto;
+  }
+
+  .bar {
+    flex: none;
+    width: 100%;
+  }
+
+  .cell {
+    display: none;
+  }
+
+  .driftMobile {
+    display: block;
+  }
+
+  .valuesMobile {
+    display: flex;
+  }
+}

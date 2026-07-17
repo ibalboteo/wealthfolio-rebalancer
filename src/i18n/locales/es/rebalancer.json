@@ -1,0 +1,63 @@
+{
+  "account": {
+    "noAccounts": "No se encontraron cuentas.",
+    "searchPlaceholder": "Buscar cuentas...",
+    "select": "Selecciona una cuenta",
+    "selectPrompt": "Selecciona una cuenta para identificar oportunidades de traspaso."
+  },
+  "controls": {
+    "any": "Cualquiera",
+    "decreaseThreshold": "Reducir umbral",
+    "increaseThreshold": "Aumentar umbral",
+    "pp": "{{value}} pp",
+    "threshold": "Umbral"
+  },
+  "header": {
+    "subtitle": "Identifica traspasos libres de impuestos para mantener tu cartera en objetivo"
+  },
+  "holdings": {
+    "addTransactions": "Añadir transacciones",
+    "empty": "No se encontraron posiciones en esta cuenta."
+  },
+  "overview": {
+    "aboveTarget": "Por encima del objetivo",
+    "belowTarget": "Por debajo del objetivo",
+    "biggestGaps": "Mayores diferencias",
+    "colAllocation": "Asignación",
+    "colCurrent": "Actual",
+    "colDrift": "Desviación",
+    "colFund": "Fondo",
+    "colTarget": "Objetivo",
+    "gapsEmpty": "Todo está dentro del objetivo. No se requiere ninguna acción.",
+    "gapsSubtitleAll": "Fondos fuera de objetivo, mayor desviación primero.",
+    "gapsSubtitleThreshold": "Fondos que superan el umbral de {{value}} pp.",
+    "moreOffTarget": "+{{n}} más fuera de objetivo",
+    "subtitleCurrent": "Asignación actual de cada fondo frente a su objetivo.",
+    "subtitleProjected": "Asignación proyectada tras aplicar los traspasos sugeridos.",
+    "title": "Asignación frente a objetivo",
+    "viewTransfers": "Ver traspasos para reajustar"
+  },
+  "plan": {
+    "configurePrompt": "Define tus asignaciones objetivo para descubrir qué traspasos ajustarán tu cartera al objetivo.",
+    "corrupted": "Tu plan necesita ajustes. Asegúrate de que las asignaciones activas sumen 100 %.",
+    "create": "Crear plan",
+    "description": "Define tus asignaciones objetivo: el complemento calculará los traspasos óptimos para alcanzarlas.",
+    "edit": "Editar plan"
+  },
+  "planner": {
+    "enableAria": "Activar {{name}} en el plan",
+    "save": "Guardar",
+    "saveError": "No se pudo guardar el plan. Inténtalo de nuevo.",
+    "sumError": "Las asignaciones activas suman {{total}} %, deben sumar 100 %",
+    "targetAria": "Asignación objetivo para {{name}}"
+  },
+  "transfers": {
+    "onTarget": "Tu cartera está en objetivo: no se necesitan traspasos.",
+    "pctTooltip": "Porcentaje del fondo de origen que se traspasa"
+  },
+  "view": {
+    "current": "Actual",
+    "projected": "Proyectado",
+    "transfers": "Traspasos"
+  }
+}

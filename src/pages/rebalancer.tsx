@@ -1,6 +1,6 @@
 import type { AddonContext } from '@wealthfolio/addon-sdk';
 import {
-  AmountDisplay,
+  AnimatedToggleGroup,
   Button,
   Icons,
   Sheet,
@@ -10,18 +10,19 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@wealthfolio/ui';
-import { pascalCase } from 'change-case';
-import { Suspense, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   AccountSelector,
+  AllocationOverview,
   ApplicationHeader,
   HoldingCard,
   HoldingPlanner,
-  TickerAvatar,
 } from '../components';
-import { type PlannedHolding, useSuspenseHoldings } from '../hooks/use-holdings';
+import { HoldingCardSkeleton } from '../components/transfer-card';
+import { useHostLanguage } from '../hooks';
+import { useSuspenseHoldings } from '../hooks/use-holdings';
 import {
-  type RebalancePlan,
   TOLERANCE_MAX,
   TOLERANCE_MIN,
   TOLERANCE_STEP,
@@ -29,7 +30,8 @@ import {
   useRebalance,
   useTolerance,
 } from '../hooks/use-rebalance';
-import { addonName, useSelectedAccount } from '../lib';
+import { addonName, sumEnabledValue, useSelectedAccount } from '../lib';
+import styles from './rebalancer.module.css';
 
 interface EditPlanSheetProps {
   ctx: AddonContext;
@@ -37,8 +39,10 @@ interface EditPlanSheetProps {
   compact?: boolean;
 }
 
-export function EditPlanSheet({ ctx, label = 'Edit Plan', compact = false }: EditPlanSheetProps) {
+export function EditPlanSheet({ ctx, label, compact = false }: EditPlanSheetProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
+  const resolvedLabel = label ?? t('plan.edit', 'Edit Plan');
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -50,14 +54,17 @@ export function EditPlanSheet({ ctx, label = 'Edit Plan', compact = false }: Edi
           className="flex items-center gap-2"
         >
           <Icons.Settings className="h-4 w-4" />
-          {compact ? <span className="hidden sm:inline">{label}</span> : label}
+          {compact ? <span className="hidden sm:inline">{resolvedLabel}</span> : resolvedLabel}
         </Button>
       </SheetTrigger>
       <SheetContent className="w-full sm:max-w-lg flex flex-col h-full">
-        <SheetHeader className="flex-shrink-0">
-          <SheetTitle>Edit Plan</SheetTitle>
+        <SheetHeader className="shrink-0">
+          <SheetTitle>{t('plan.edit', 'Edit Plan')}</SheetTitle>
           <SheetDescription>
-            Adjust your target allocations to create a personalized investment plan.
+            {t(
+              'plan.description',
+              'Define your target allocations — the addon will calculate the optimal transfers to reach them.'
+            )}
           </SheetDescription>
         </SheetHeader>
 
@@ -69,99 +76,17 @@ export function EditPlanSheet({ ctx, label = 'Edit Plan', compact = false }: Edi
   );
 }
 
-export function PreviewSheet({
-  holdings,
-  rebalancePlan,
-  tolerancePp,
-}: {
-  holdings: PlannedHolding[];
-  rebalancePlan: RebalancePlan | undefined;
-  tolerancePp: number;
-}) {
-  const total = rebalancePlan?.totalPreviewValue ?? 0;
-  const previewById = new Map(rebalancePlan?.previewHoldings.map((h) => [h.id, h]));
-
-  // Split enabled holdings into those touched by a transfer and those already on target
-  const transferIds = new Set(
-    rebalancePlan?.transfers.flatMap(({ from, to }) => [from.id, to.id]) ?? []
-  );
-  const enabledHoldings = holdings.filter((h) => h.plan?.enabled);
-
-  const renderRow = (h: PlannedHolding, isOnTarget: boolean) => {
-    const currentPct = total > 0 ? (h.marketValue.base / total) * 100 : 0;
-    const projected = previewById.get(h.id);
-    const projectedPct =
-      projected && total > 0 ? (projected.marketValue.base / total) * 100 : currentPct;
-
-    return (
-      <div key={h.id} className="flex items-center gap-3 rounded-md px-1 py-2 hover:bg-muted/40">
-        <TickerAvatar
-          symbol={h.instrument?.symbol || `$${h.holdingType}`}
-          className="w-8 h-8 flex-none"
-        />
-        <div className="grow min-w-0">
-          <div className="text-sm font-medium truncate">
-            {h.instrument?.name || h.instrument?.symbol || h.holdingType}
-          </div>
-          {projected && (
-            <AmountDisplay
-              value={projected.marketValue.base}
-              currency={h.baseCurrency}
-              className="text-xs text-muted-foreground"
-            />
-          )}
-        </div>
-        <div className="text-right tabular-nums shrink-0">
-          {isOnTarget ? (
-            <div className="flex items-center gap-1 justify-end text-xs font-medium text-green-500">
-              <Icons.CheckCircle className="h-3.5 w-3.5" />
-              <span>On target</span>
-            </div>
-          ) : (
-            <div className="text-sm">
-              <span className="text-muted-foreground">{currentPct.toFixed(1)}%</span>
-              <span className="mx-1 text-muted-foreground/50">→</span>
-              <span className="font-semibold">{projectedPct.toFixed(1)}%</span>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
+function LoadingSkeleton() {
   return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <Button name="preview-button" variant="outline" className="flex items-center gap-2">
-          <Icons.Eye className="h-4 w-4" />
-          <span className="hidden sm:inline">Preview</span>
-        </Button>
-      </SheetTrigger>
-      <SheetContent className="w-full sm:max-w-lg flex flex-col">
-        <SheetHeader>
-          <SheetTitle>Allocation: Current vs Target</SheetTitle>
-          <SheetDescription>
-            How each position compares to its target after rebalancing.
-          </SheetDescription>
-        </SheetHeader>
-
-        <div className="flex-1 overflow-y-auto space-y-1">
-          {enabledHoldings.map((h) => {
-            if (transferIds.has(h.id)) return renderRow(h, false);
-            const currentPct = total > 0 ? (h.marketValue.base / total) * 100 : 0;
-            const isOnTarget = Math.abs(currentPct - (h.plan?.target ?? 0)) <= tolerancePp;
-            return renderRow(h, isOnTarget);
-          })}
-        </div>
-      </SheetContent>
-    </Sheet>
-  );
-}
-
-function LoadingSpinner() {
-  return (
-    <div className="flex items-center justify-center flex-1 min-h-0">
-      <Icons.Loader className="h-6 w-6 animate-spin text-muted-foreground" />
+    <div className="flex-1 overflow-y-auto">
+      <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-fr">
+        {Array.from({ length: 6 }, (_, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: static placeholder list
+          <li key={i}>
+            <HoldingCardSkeleton />
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -172,44 +97,30 @@ interface RebalancerContentProps {
 }
 
 function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
+  const { t } = useTranslation();
   const { data: holdings } = useSuspenseHoldings({ accountId, ctx });
-  const [tolerancePp, setTolerancePp] = useTolerance();
-  const rebalancePlan = useRebalance({ ctx, tolerance: tolerancePp / 100 });
-  const configurationRequired = useConfigure();
+  const [tolerancePp, setTolerancePp] = useTolerance(ctx);
+  const rebalancePlan = useRebalance(holdings, tolerancePp / 100);
+  const configurationRequired = useConfigure(holdings);
+  const [view, setView] = useState<'transfers' | 'current' | 'projected'>('transfers');
 
   const hasHoldings = holdings.length > 0;
   const hasPlan = hasHoldings && !configurationRequired;
 
-  // Holdings involved in a transfer (by id)
-  const transferIds = new Set(
-    rebalancePlan?.transfers.flatMap(({ from, to }) => [from.id, to.id]) ?? []
-  );
-  const totalEnabledValue = rebalancePlan?.totalPreviewValue ?? 0;
-  // A holding is "on target" only when it is enabled, not part of a transfer,
-  // AND its actual deviation from target is within the configured tolerance.
-  // Checking the deviation directly prevents invalid localStorage data (e.g.
-  // all targets = 0) from making every holding appear on-target.
-  const onTargetHoldings = hasPlan
-    ? holdings.filter((h) => {
-        if (!h.plan?.enabled || transferIds.has(h.id)) return false;
-        const currentPct =
-          totalEnabledValue > 0 ? (h.marketValue.base / totalEnabledValue) * 100 : 0;
-        return Math.abs(currentPct - (h.plan?.target ?? 0)) <= tolerancePp;
-      })
-    : [];
+  const totalEnabledValue = useMemo(() => sumEnabledValue(holdings), [holdings]);
 
   if (!hasHoldings) {
     return (
       <div className="flex flex-col items-center justify-center flex-1 min-h-0 gap-6">
         <p className="text-lg font-light text-muted-foreground">
-          No transactions found in this account.
+          {t('holdings.empty', 'No holdings found in this account.')}
         </p>
         <Button
           onClick={() => ctx.api.navigation.navigate('/activities')}
           className="flex items-center gap-2"
         >
           <Icons.Plus className="h-4 w-4" />
-          Add Transactions
+          {t('holdings.addTransactions', 'Add Transactions')}
         </Button>
       </div>
     );
@@ -221,18 +132,24 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
         <div className="flex flex-col items-center gap-3 text-center max-w-md">
           <Icons.AlertCircle className="h-6 w-6 text-muted-foreground" />
           <p className="text-lg font-light text-muted-foreground">
-            Please configure your plan to establish target allocations.
+            {t(
+              'plan.configurePrompt',
+              'Set your target allocations to discover which transfers will bring your portfolio on target.'
+            )}
           </p>
         </div>
-        <EditPlanSheet ctx={ctx} label="Create Plan" />
+        <EditPlanSheet ctx={ctx} label={t('plan.create', 'Create Plan')} />
       </div>
     );
   }
 
-  // Plan exists but produces no visible cards. The stored allocations are
-  // invalid (e.g. all targets = 0, or enabled weights don't sum to 100).
-  const planIsCorrupted =
-    hasPlan && (rebalancePlan?.transfers.length ?? 0) === 0 && onTargetHoldings.length === 0;
+  // A saved plan must have its enabled targets sum to 100%. Legacy or
+  // hand-edited storage can violate that; treat it as needing adjustment.
+  const enabledTargetsSum = holdings.reduce(
+    (sum, h) => (h.plan?.enabled ? sum + (h.plan?.target ?? 0) : sum),
+    0
+  );
+  const planIsCorrupted = hasPlan && Math.round(enabledTargetsSum * 100) / 100 !== 100;
 
   if (planIsCorrupted) {
     return (
@@ -240,10 +157,13 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
         <div className="flex flex-col items-center gap-3 text-center max-w-md">
           <Icons.AlertCircle className="h-6 w-6 text-muted-foreground" />
           <p className="text-lg font-light text-muted-foreground">
-            Your plan needs adjustment. Make sure enabled allocations add up to 100%.
+            {t(
+              'plan.corrupted',
+              'Your plan needs adjustment. Make sure enabled allocations add up to 100%.'
+            )}
           </p>
         </div>
-        <EditPlanSheet ctx={ctx} label="Edit Plan" />
+        <EditPlanSheet ctx={ctx} label={t('plan.edit', 'Edit Plan')} />
       </div>
     );
   }
@@ -253,7 +173,9 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
       {hasPlan && (
         <div className="flex items-center justify-between shrink-0 gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Threshold</span>
+            <span className="text-sm text-muted-foreground">
+              {t('controls.threshold', 'Threshold')}
+            </span>
             <div className="flex items-center gap-1">
               <Button
                 type="button"
@@ -262,12 +184,14 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
                 className="h-7 w-7"
                 onClick={() => setTolerancePp(tolerancePp - TOLERANCE_STEP)}
                 disabled={tolerancePp <= TOLERANCE_MIN}
-                aria-label="Decrease threshold"
+                aria-label={t('controls.decreaseThreshold', 'Decrease threshold')}
               >
                 <Icons.Minus className="h-3 w-3" />
               </Button>
-              <span className="min-w-[3rem] text-center text-sm font-medium tabular-nums">
-                {tolerancePp === 0 ? 'Any' : `${tolerancePp.toFixed(1)}pp`}
+              <span className="min-w-12 text-center text-sm font-medium tabular-nums">
+                {tolerancePp === 0
+                  ? t('controls.any', 'Any')
+                  : t('controls.pp', '{{value}}pp', { value: tolerancePp.toFixed(1) })}
               </span>
               <Button
                 type="button"
@@ -276,57 +200,87 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
                 className="h-7 w-7"
                 onClick={() => setTolerancePp(tolerancePp + TOLERANCE_STEP)}
                 disabled={tolerancePp >= TOLERANCE_MAX}
-                aria-label="Increase threshold"
+                aria-label={t('controls.increaseThreshold', 'Increase threshold')}
               >
                 <Icons.Plus className="h-3 w-3" />
               </Button>
             </div>
           </div>
-          <div className="flex gap-2">
-            <PreviewSheet
-              holdings={holdings}
-              rebalancePlan={rebalancePlan}
-              tolerancePp={tolerancePp}
-            />
-            <EditPlanSheet ctx={ctx} compact />
-          </div>
+          <EditPlanSheet ctx={ctx} compact />
         </div>
       )}
-      <div className="flex-1 overflow-y-auto">
-        <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-fr">
-          {rebalancePlan?.transfers.map(({ from, to, amount, currency }) => (
-            <HoldingCard
-              key={`${from.id}-${to.id}`}
-              status="transfer"
-              from={from}
-              to={to}
-              amount={amount}
-              currency={currency}
+
+      <div className="flex flex-1 min-h-0 flex-col gap-4">
+        <AnimatedToggleGroup
+          className="self-start"
+          value={view}
+          onValueChange={(v) => setView(v as 'transfers' | 'current' | 'projected')}
+          items={[
+            { value: 'current', label: t('view.current', 'Current') },
+            { value: 'transfers', label: t('view.transfers', 'Transfers') },
+            { value: 'projected', label: t('view.projected', 'Projected') },
+          ]}
+        />
+
+        {view === 'transfers' ? (
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            {(rebalancePlan?.transfers.length ?? 0) === 0 ? (
+              <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
+                <Icons.CheckCircle className="h-6 w-6 text-success" />
+                <p className="text-lg font-light text-muted-foreground max-w-md">
+                  {t('transfers.onTarget', 'Your portfolio is on target — no transfers needed.')}
+                </p>
+              </div>
+            ) : (
+              <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-fr">
+                {rebalancePlan?.transfers.map(({ from, to, amount, currency }, index) => (
+                  <li
+                    key={`${from.id}-${to.id}`}
+                    className={styles.card}
+                    style={{ animationDelay: `${index * 0.04}s` }}
+                  >
+                    <HoldingCard
+                      status="transfer"
+                      from={from}
+                      to={to}
+                      amount={amount}
+                      currency={currency}
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ) : (
+          <div className="flex-1 min-h-0">
+            <AllocationOverview
+              holdings={holdings}
+              previewHoldings={rebalancePlan?.previewHoldings ?? holdings}
+              totalEnabledValue={totalEnabledValue}
+              totalPreviewValue={rebalancePlan?.totalPreviewValue ?? 0}
+              tolerancePp={tolerancePp}
+              currency={holdings[0]?.baseCurrency ?? 'USD'}
+              mode={view === 'projected' ? 'projected' : 'current'}
+              onNavigateToTransfers={() => setView('transfers')}
             />
-          ))}
-          {onTargetHoldings.map((h) => (
-            <HoldingCard
-              key={h.id}
-              status="on-target"
-              holding={h}
-              totalPortfolioValue={rebalancePlan?.totalPreviewValue ?? 0}
-            />
-          ))}
-        </ul>
+          </div>
+        )}
       </div>
     </>
   );
 }
 
 export function Rebalancer({ ctx }: { ctx: AddonContext }) {
+  useHostLanguage(ctx);
+  const { t } = useTranslation();
   const { selectedAccount } = useSelectedAccount();
 
   return (
     <div className="p-6 flex flex-col h-full gap-6">
       <ApplicationHeader
         className="shrink-0"
-        heading={pascalCase(addonName)}
-        text="Keep your portfolio aligned with your investment goals"
+        heading={`${addonName.charAt(0).toUpperCase()}${addonName.slice(1)}`}
+        text={t('header.subtitle', 'Identify tax-free transfers to keep your portfolio on target')}
       >
         <AccountSelector ctx={ctx} />
       </ApplicationHeader>
@@ -334,11 +288,14 @@ export function Rebalancer({ ctx }: { ctx: AddonContext }) {
       {!selectedAccount ? (
         <div className="flex items-center justify-center flex-1 min-h-0">
           <p className="text-lg font-light text-muted-foreground text-center max-w-md">
-            Please select an account to identify rebalance opportunities.
+            {t(
+              'account.selectPrompt',
+              'Please select an account to identify transfer opportunities.'
+            )}
           </p>
         </div>
       ) : (
-        <Suspense fallback={<LoadingSpinner />}>
+        <Suspense fallback={<LoadingSkeleton />}>
           <RebalancerContent ctx={ctx} accountId={selectedAccount.id} />
         </Suspense>
       )}

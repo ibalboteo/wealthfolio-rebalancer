@@ -14,6 +14,18 @@ pre-commit:
       fail_text: |
         TypeScript found type errors.
         Please fix the type errors before committing.
+    i18n-extract:
+      glob: "*.{ts,tsx}"
+      run: pnpm exec i18next-cli extract --sync-primary --ci
+      fail_text: |
+        Translation files are out of sync with the code.
+        Run 'pnpm i18n:extract' to update them.
+    i18n-types:
+      glob: "*.{ts,tsx}"
+      run: pnpm exec i18next-cli types --ci
+      fail_text: |
+        Translation types are out of date.
+        Run 'pnpm i18n:types' to regenerate them.
 
 # Skip lefthook execution for merge commits
 output:

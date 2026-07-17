@@ -2,11 +2,16 @@
  * Tests for the HoldingPlanData validator and plan-merge logic.
  *
  * These are the most critical tests in the suite: the validator is the
- * safety net that prevents crashes when localStorage holds malformed,
+ * safety net that prevents crashes when persisted plan data is malformed,
  * missing, or legacy data on first run.
  */
-import { describe, expect, it } from 'vitest';
-import { isHoldingPlanDataArray } from './use-holdings';
+import { describe, expect, it, vi } from 'vitest';
+import {
+  type HoldingPlanData,
+  isHoldingPlanDataArray,
+  loadHoldingPlan,
+  persistHoldingPlan,
+} from './use-holdings';
 
 describe('isHoldingPlanDataArray', () => {
   // --- happy path ---
@@ -121,5 +126,40 @@ describe('isHoldingPlanDataArray', () => {
       { id: 'BONDS', target: 40, enabled: false },
     ];
     expect(isHoldingPlanDataArray(storedPlan)).toBe(true);
+  });
+});
+
+describe('holding plan persistence', () => {
+  it('loads plan through async addon storage API', async () => {
+    const storedPlan: HoldingPlanData[] = [{ id: 'aapl', target: 60, enabled: true }];
+    const get = vi.fn().mockResolvedValue(JSON.stringify(storedPlan));
+    const ctx = {
+      api: {
+        storage: {
+          get,
+        },
+      },
+    } as any;
+
+    const result = await loadHoldingPlan(ctx, 'acc-1');
+
+    expect(result).toEqual(storedPlan);
+    expect(get).toHaveBeenCalledWith('addons:rebalancer:account:acc-1:plan');
+  });
+
+  it('persists plan through async addon storage API', async () => {
+    const plan: HoldingPlanData[] = [{ id: 'bnd', target: 40, enabled: true }];
+    const set = vi.fn().mockResolvedValue(undefined);
+    const ctx = {
+      api: {
+        storage: {
+          set,
+        },
+      },
+    } as any;
+
+    await persistHoldingPlan(ctx, 'acc-1', plan);
+
+    expect(set).toHaveBeenCalledWith('addons:rebalancer:account:acc-1:plan', JSON.stringify(plan));
   });
 });

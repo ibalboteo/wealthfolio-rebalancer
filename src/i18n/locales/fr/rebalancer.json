@@ -1,0 +1,63 @@
+{
+  "account": {
+    "noAccounts": "Aucun compte trouvé.",
+    "searchPlaceholder": "Rechercher des comptes...",
+    "select": "Sélectionner un compte",
+    "selectPrompt": "Veuillez sélectionner un compte pour identifier les opportunités de transfert."
+  },
+  "controls": {
+    "any": "Tous",
+    "decreaseThreshold": "Diminuer le seuil",
+    "increaseThreshold": "Augmenter le seuil",
+    "pp": "{{value}} pp",
+    "threshold": "Seuil"
+  },
+  "header": {
+    "subtitle": "Identifiez les transferts sans impôt pour garder votre portefeuille sur objectif"
+  },
+  "holdings": {
+    "addTransactions": "Ajouter des transactions",
+    "empty": "Aucune position trouvée dans ce compte."
+  },
+  "overview": {
+    "aboveTarget": "Au-dessus de l'objectif",
+    "belowTarget": "En dessous de l'objectif",
+    "biggestGaps": "Plus grands écarts",
+    "colAllocation": "Allocation",
+    "colCurrent": "Actuel",
+    "colDrift": "Écart",
+    "colFund": "Fonds",
+    "colTarget": "Objectif",
+    "gapsEmpty": "Tout est dans l'objectif. Aucune action requise.",
+    "gapsSubtitleAll": "Fonds hors objectif, plus grand écart en premier.",
+    "gapsSubtitleThreshold": "Fonds au-delà du seuil de {{value}} pp.",
+    "moreOffTarget": "+{{n}} de plus hors objectif",
+    "subtitleCurrent": "Allocation actuelle de chaque fonds par rapport à son objectif.",
+    "subtitleProjected": "Allocation projetée après application des transferts suggérés.",
+    "title": "Allocation vs objectif",
+    "viewTransfers": "Voir les transferts pour rééquilibrer"
+  },
+  "plan": {
+    "configurePrompt": "Définissez vos allocations cibles pour découvrir quels transferts ramèneront votre portefeuille sur objectif.",
+    "corrupted": "Votre plan nécessite un ajustement. Assurez-vous que les allocations activées totalisent 100 %.",
+    "create": "Créer un plan",
+    "description": "Définissez vos allocations cibles — l'extension calculera les transferts optimaux pour les atteindre.",
+    "edit": "Modifier le plan"
+  },
+  "planner": {
+    "enableAria": "Activer {{name}} dans le plan",
+    "save": "Enregistrer",
+    "saveError": "Échec de l'enregistrement du plan. Veuillez réessayer.",
+    "sumError": "Les allocations activées totalisent {{total}} %, elles doivent égaler 100 %",
+    "targetAria": "Allocation cible pour {{name}}"
+  },
+  "transfers": {
+    "onTarget": "Votre portefeuille est sur objectif — aucun transfert nécessaire.",
+    "pctTooltip": "Pourcentage du fonds source transféré"
+  },
+  "view": {
+    "current": "Actuel",
+    "projected": "Projeté",
+    "transfers": "Transferts"
+  }
+}

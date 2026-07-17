@@ -2,19 +2,44 @@
   "id": "rebalancer",
   "name": "rebalancer",
   "version": "3.0.0",
-  "description": "Rebalancer calculates the exact trades you need to keep your portfolio on target, on demand.",
+  "description": "Identifies the optimal fund-to-fund transfers to keep your portfolio on target — tax-free in Spain.",
   "author": "Ivan Balboteo",
   "main": "dist/addon.js",
-  "sdkVersion": "3.0.0",
+  "sdkVersion": "3.6.0",
+  "minWealthfolioVersion": "3.6.0",
+  "hostDependencies": {
+    "@tanstack/react-query": "^5.90.0",
+    "@wealthfolio/addon-sdk": "^3.6.0",
+    "@wealthfolio/ui": "^3.6.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "contributes": {
+    "routes": [
+      {
+        "id": "main"
+      }
+    ],
+    "links": {
+      "sidebar": [
+        {
+          "id": "main-nav",
+          "route": "main",
+          "label": "Rebalancer",
+          "icon": "scales",
+          "order": 100
+        }
+      ]
+    }
+  },
   "enabled": true,
   "permissions": [
     {
       "category": "ui",
       "functions": [
-        "sidebar.addItem",
         "router.add"
       ],
-      "purpose": "Add navigation items and routes to the sidebar"
+      "purpose": "Register addon routes in the UI"
     },
     {
       "category": "accounts",
@@ -36,6 +61,13 @@
         "navigate"
       ],
       "purpose": "Navigate to activities page for transaction management"
+    },
+    {
+      "category": "settings",
+      "functions": [
+        "get"
+      ],
+      "purpose": "Read the host UI language to localize the addon"
     }
   ],
   "keywords": [

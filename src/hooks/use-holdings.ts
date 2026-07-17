@@ -1,8 +1,7 @@
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
 import type { AddonContext, Holding } from '@wealthfolio/addon-sdk';
 import { addonName } from '../lib';
-import { isRecord, readStorage } from '../lib/storage';
-import { useLocalStorage } from './use-local-storage';
+import { isRecord, readAddonStorage, writeAddonStorage } from '../lib/storage';
 
 export interface HoldingPlanData {
   id: string;
@@ -35,6 +34,38 @@ interface UseHoldingsOptions {
   enabled?: boolean;
 }
 
+function getPlanKey(accountId: string) {
+  return `addons:${addonName}:account:${accountId}:plan`;
+}
+
+export const holdingPlanQueryOptions = (ctx: AddonContext, accountId: string) => ({
+  queryKey: ['holding-plan', accountId] as const,
+  queryFn: () => loadHoldingPlan(ctx, accountId),
+  enabled: !!accountId && !!ctx.api,
+  staleTime: 5 * 60 * 1000,
+  gcTime: 10 * 60 * 1000,
+});
+
+export async function loadHoldingPlan(
+  ctx: AddonContext,
+  accountId: string
+): Promise<HoldingPlanData[]> {
+  return readAddonStorage<HoldingPlanData[]>(
+    ctx,
+    getPlanKey(accountId),
+    [],
+    isHoldingPlanDataArray
+  );
+}
+
+export async function persistHoldingPlan(
+  ctx: AddonContext,
+  accountId: string,
+  plan: HoldingPlanData[]
+): Promise<void> {
+  await writeAddonStorage(ctx, getPlanKey(accountId), plan);
+}
+
 async function fetchHoldings(accountId: string, ctx: AddonContext): Promise<PlannedHolding[]> {
   if (!accountId || !ctx.api) {
     throw new Error('Account ID and API context are required');
@@ -43,8 +74,7 @@ async function fetchHoldings(accountId: string, ctx: AddonContext): Promise<Plan
   const data = await ctx.api.portfolio.getHoldings(accountId);
   const holdings = Array.isArray(data) ? data : [];
 
-  const planKey = `addons:${addonName}:account:${accountId}:plan`;
-  const plan = readStorage<HoldingPlanData[]>(planKey, [], isHoldingPlanDataArray);
+  const plan = await loadHoldingPlan(ctx, accountId);
 
   const holdingsExtra = holdings.map((holding) => {
     const holdingPlan = plan.find((p: HoldingPlanData) => p.id === holding.id);
@@ -79,21 +109,20 @@ export function useSuspenseHoldings({ accountId, ctx }: Omit<UseHoldingsOptions,
 
 export interface UpdateHoldingParams {
   accountId: string;
+  ctx: AddonContext;
 }
 
-export function useUpdateHolding({ accountId }: UpdateHoldingParams) {
+export function useUpdateHolding({ accountId, ctx }: UpdateHoldingParams) {
   const queryClient = useQueryClient();
-
-  const planKey = `addons:${addonName}:account:${accountId}:plan`;
-
-  const [plan, setPlan] = useLocalStorage<HoldingPlanData[]>(planKey, [], isHoldingPlanDataArray);
+  const { data: plan = [] } = useQuery(holdingPlanQueryOptions(ctx, accountId));
 
   const mutation = useMutation({
     mutationFn: async (plan: HoldingPlanData[]) => {
-      setPlan(plan);
+      await persistHoldingPlan(ctx, accountId, plan);
     },
     onSuccess: () => {
       // Invalidate and refetch holdings query to reflect changes
+      queryClient.invalidateQueries({ queryKey: ['holding-plan', accountId] });
       queryClient.invalidateQueries({ queryKey: ['holdings', accountId] });
     },
   });

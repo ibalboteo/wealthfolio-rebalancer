@@ -1,19 +1,9 @@
 import type { AddonContext } from '@wealthfolio/addon-sdk';
 import { useMemo } from 'react';
 import type { RebalanceAction } from '../lib';
-import {
-  addonName,
-  calculateRebalanceActions,
-  simulateRebalance,
-  useSelectedAccount,
-} from '../lib';
-import {
-  type HoldingPlanData,
-  isHoldingPlanDataArray,
-  type PlannedHolding,
-  useHoldings,
-} from './use-holdings';
-import { useLocalStorage } from './use-local-storage';
+import { addonName, calculateRebalanceActions, simulateRebalance } from '../lib';
+import type { PlannedHolding } from './use-holdings';
+import { useAddonStorageState } from './use-local-storage';
 
 // ─── Tolerance ──────────────────────────────────────────────────────────────
 
@@ -31,8 +21,13 @@ function isValidTolerancePp(v: unknown): v is number {
  * Holdings that deviate from target by less than this amount are skipped.
  * Range: 0–20 pp.  Default: 0 (any deviation triggers a transfer).
  */
-export function useTolerance(): [number, (pp: number) => void] {
-  const [tolerancePp, setRaw] = useLocalStorage<number>(TOLERANCE_KEY, 0, isValidTolerancePp);
+export function useTolerance(ctx: AddonContext): [number, (pp: number) => void] {
+  const [tolerancePp, setRaw] = useAddonStorageState<number>(
+    ctx,
+    TOLERANCE_KEY,
+    0,
+    isValidTolerancePp
+  );
 
   const setTolerancePp = (pp: number) => {
     // Round to nearest step to avoid floating-point drift
@@ -43,7 +38,7 @@ export function useTolerance(): [number, (pp: number) => void] {
   return [tolerancePp, setTolerancePp];
 }
 
-export { TOLERANCE_MIN, TOLERANCE_MAX, TOLERANCE_STEP };
+export { TOLERANCE_MAX, TOLERANCE_MIN, TOLERANCE_STEP };
 
 export interface RebalancePlan {
   transfers: RebalanceAction[];
@@ -51,22 +46,14 @@ export interface RebalancePlan {
   totalPreviewValue: number;
 }
 
-export interface UseRebalanceOptions {
-  ctx: AddonContext;
-  tolerance?: number;
-  enabled?: boolean;
-}
-
-export function useRebalance({
-  ctx,
-  tolerance = 0,
-}: UseRebalanceOptions): RebalancePlan | undefined {
-  const { selectedAccount } = useSelectedAccount();
-  const { data: holdings } = useHoldings({
-    accountId: selectedAccount?.id || '',
-    ctx,
-  });
-
+/**
+ * Pure computation hook: derives the rebalance plan from holdings and tolerance.
+ * Holdings must be provided by the caller (e.g. from useSuspenseHoldings).
+ */
+export function useRebalance(
+  holdings: PlannedHolding[] | undefined,
+  tolerance = 0
+): RebalancePlan | undefined {
   return useMemo(() => {
     const transfers = calculateRebalanceActions(holdings, tolerance);
     const previewHoldings = simulateRebalance(holdings, transfers);
@@ -83,20 +70,12 @@ export function useRebalance({
   }, [holdings, tolerance]);
 }
 
-export function useConfigure(): boolean {
-  const { selectedAccount } = useSelectedAccount();
-  const accountId = selectedAccount?.id ?? '__none__';
-
-  // The stored value is HoldingPlanData[], not PlannedHolding[]
-  const [savedPlan] = useLocalStorage<HoldingPlanData[]>(
-    `addons:${addonName}:account:${accountId}:plan`,
-    [],
-    isHoldingPlanDataArray
-  );
-
-  if (accountId === '__none__') {
-    return true;
-  }
-
-  return savedPlan.length === 0;
+/**
+ * Pure function: determines whether a plan needs configuration based on
+ * the enriched holdings data. A plan is "unconfigured" when no holding
+ * has a non-default plan entry (i.e. all targets are 0 and all are enabled).
+ */
+export function useConfigure(holdings: PlannedHolding[] | undefined): boolean {
+  if (!holdings || holdings.length === 0) return true;
+  return holdings.every((h) => h.plan.target === 0 && h.plan.enabled === true);
 }

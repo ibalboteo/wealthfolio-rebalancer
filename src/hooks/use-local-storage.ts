@@ -1,63 +1,57 @@
+import type { AddonContext } from '@wealthfolio/addon-sdk';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { readStorage, type Validator, writeStorage } from '../lib/storage';
+import { readAddonStorage, type Validator, writeAddonStorage } from '../lib/storage';
 
-/**
- * Hook genérico para sincronizar estado con localStorage
- */
-export function useLocalStorage<T>(key: string, defaultValue: T, validator?: Validator<T>) {
+export function useAddonStorageState<T>(
+  ctx: AddonContext,
+  key: string,
+  defaultValue: T,
+  validator?: Validator<T>
+) {
   const defaultValueRef = useRef(defaultValue);
   defaultValueRef.current = defaultValue;
 
   const validatorRef = useRef(validator);
   validatorRef.current = validator;
 
-  const [value, setValue] = useState<T>(() =>
-    readStorage(key, defaultValueRef.current, validatorRef.current)
-  );
+  const [value, setValue] = useState<T>(defaultValue);
+  const [hydrated, setHydrated] = useState(false);
 
-  // Efecto para actualizar el valor cuando cambie la clave
   useEffect(() => {
-    setValue(readStorage(key, defaultValueRef.current, validatorRef.current));
-  }, [key]);
+    let active = true;
 
-  /**
-   * Actualiza el estado y localStorage de forma segura
-   */
+    setHydrated(false);
+    setValue(defaultValue);
+
+    const hydrate = async () => {
+      const nextValue = await readAddonStorage(
+        ctx,
+        key,
+        defaultValueRef.current,
+        validatorRef.current
+      );
+
+      if (!active) return;
+      setValue(nextValue);
+      setHydrated(true);
+    };
+
+    void hydrate();
+    return () => {
+      active = false;
+    };
+  }, [ctx, defaultValue, key]);
+
   const setStoredValue = useCallback(
     (newValue: T | ((prev: T) => T)) => {
       setValue((prev) => {
         const valueToStore = newValue instanceof Function ? newValue(prev) : newValue;
-        writeStorage(key, valueToStore);
+        void writeAddonStorage(ctx, key, valueToStore);
         return valueToStore;
       });
     },
-    [key]
+    [ctx, key]
   );
 
-  /**
-   * Sincroniza el valor si cambia en otra pestaña (storage) o en el mismo tab (local-storage-write)
-   */
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    function handleStorageChange(event: StorageEvent | CustomEvent<{ key: string }>) {
-      const changedKey =
-        event instanceof StorageEvent
-          ? event.key
-          : (event as CustomEvent<{ key: string }>).detail.key;
-      // changedKey === null means all storage was cleared (e.g. DevTools "Clear storage")
-      if (changedKey === null || changedKey === key) {
-        setValue(readStorage(key, defaultValueRef.current, validatorRef.current));
-      }
-    }
-
-    window.addEventListener('storage', handleStorageChange as EventListener);
-    window.addEventListener('local-storage-write', handleStorageChange as EventListener);
-    return () => {
-      window.removeEventListener('storage', handleStorageChange as EventListener);
-      window.removeEventListener('local-storage-write', handleStorageChange as EventListener);
-    };
-  }, [key]);
-
-  return [value, setStoredValue] as const;
+  return [value, setStoredValue, hydrated] as const;
 }
