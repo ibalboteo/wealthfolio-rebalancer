@@ -25,11 +25,14 @@
     "colDrift": "",
     "colFund": "",
     "colTarget": "",
+    "gapsEmpty": "",
     "gapsSubtitleAll": "",
     "gapsSubtitleThreshold": "",
+    "moreOffTarget": "",
     "subtitleCurrent": "",
     "subtitleProjected": "",
-    "title": ""
+    "title": "",
+    "viewTransfers": ""
   },
   "plan": {
     "configurePrompt": "",

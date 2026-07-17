@@ -262,7 +262,7 @@ export function AllocationOverview({
           <CardContent className="flex flex-1 flex-col">
             {gaps.length === 0 ? (
               <p className="text-muted-foreground py-6 text-center text-sm">
-                Everything is within target. No action required.
+                {t('overview.gapsEmpty', 'Everything is within target. No action required.')}
               </p>
             ) : (
               <ul className="space-y-3">
@@ -304,7 +304,9 @@ export function AllocationOverview({
                 {gaps.length > 3 && (
                   <li className="bg-muted text-muted-foreground rounded-lg px-3.5 py-2.5 text-xs">
                     <span className="text-foreground font-medium">
-                      +{gaps.length - 3} more off target
+                      {t('overview.moreOffTarget', '+{{n}} more off target', {
+                        n: gaps.length - 3,
+                      })}
                     </span>
                     <span className="px-1.5">·</span>
                     {gaps
@@ -323,7 +325,7 @@ export function AllocationOverview({
                   className="w-full"
                   onClick={onNavigateToTransfers}
                 >
-                  View transfers to rebalance
+                  {t('overview.viewTransfers', 'View transfers to rebalance')}
                   <Icons.ArrowRight className="ml-1.5 h-4 w-4" />
                 </Button>
               </div>

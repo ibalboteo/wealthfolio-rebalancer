@@ -25,11 +25,14 @@
     "colDrift": "Drift",
     "colFund": "Fund",
     "colTarget": "Target",
+    "gapsEmpty": "Everything is within target. No action required.",
     "gapsSubtitleAll": "Funds off target, largest deviation first.",
     "gapsSubtitleThreshold": "Funds beyond the {{value}}pp threshold.",
+    "moreOffTarget": "+{{n}} more off target",
     "subtitleCurrent": "Current allocation of each fund versus its target.",
     "subtitleProjected": "Projected allocation after applying the suggested transfers.",
-    "title": "Allocation vs target"
+    "title": "Allocation vs target",
+    "viewTransfers": "View transfers to rebalance"
   },
   "plan": {
     "configurePrompt": "Set your target allocations to discover which transfers will bring your portfolio on target.",
