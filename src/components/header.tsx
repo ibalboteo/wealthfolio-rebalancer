@@ -19,20 +19,17 @@ export function ApplicationHeader({
   return (
     <div className={cn('flex w-full items-center justify-between', className)}>
       <div className="flex flex-col gap-2 min-w-0 flex-1">
-        <div
-          data-tauri-drag-region="true"
-          className="draggable flex items-center space-x-4 min-w-0"
-        >
+        <div data-tauri-drag-region="true" className="flex items-center space-x-4 min-w-0">
           {headingPrefix && (
             <>
-              <h1 className="font-heading text-xl font-bold tracking-tight text-muted-foreground">
+              <h1 className="text-xl font-bold tracking-tight text-muted-foreground">
                 {headingPrefix}
               </h1>
               <span className="h-6 border-l-2"></span>
             </>
           )}
 
-          <h1 className="font-heading text-xl font-bold tracking-tight truncate">{heading}</h1>
+          <h1 className="text-xl font-bold tracking-tight truncate">{heading}</h1>
         </div>
         {text && (
           <p className="hidden sm:block text-sm sm:text-base font-light text-muted-foreground">
@@ -40,7 +37,7 @@ export function ApplicationHeader({
           </p>
         )}
       </div>
-      {children && <div className="flex-shrink-0 ml-4">{children}</div>}
+      {children && <div className="shrink-0 ml-4">{children}</div>}
     </div>
   );
 }

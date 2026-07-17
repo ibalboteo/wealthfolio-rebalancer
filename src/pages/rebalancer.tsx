@@ -54,7 +54,7 @@ export function EditPlanSheet({ ctx, label = 'Edit Plan', compact = false }: Edi
         </Button>
       </SheetTrigger>
       <SheetContent className="w-full sm:max-w-lg flex flex-col h-full">
-        <SheetHeader className="flex-shrink-0">
+        <SheetHeader className="shrink-0">
           <SheetTitle>Edit Plan</SheetTitle>
           <SheetDescription>
             Define your target allocations — the addon will calculate the optimal transfers to reach
