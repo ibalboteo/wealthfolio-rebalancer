@@ -23,7 +23,7 @@ export function useHostLanguage(ctx: AddonContext): string {
 
   useEffect(() => {
     if (i18n.language !== language) {
-      i18n.changeLanguage(language);
+      i18n.changeLanguage(language).catch(() => {});
     }
   }, [language]);
 

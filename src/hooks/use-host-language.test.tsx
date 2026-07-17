@@ -81,7 +81,7 @@ describe('useHostLanguage (reactive)', () => {
   });
 
   it('falls back to en for an unsupported host language', async () => {
-    await i18n.changeLanguage('en');
+    await i18n.changeLanguage('es');
     const ctx = makeCtx(() => Promise.resolve({ language: 'pt' }));
     const unmount = await mountWithCtx(ctx);
     expect(i18n.language).toBe('en');

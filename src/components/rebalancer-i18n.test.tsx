@@ -4,7 +4,7 @@ import type { AddonContext } from '@wealthfolio/addon-sdk';
 import { act, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { I18nextProvider } from 'react-i18next';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import i18n from '../i18n/i18n';
 import { SelectedAccountProvider } from '../lib/account-provider';
 import { AccountSelector } from './account-selector';
@@ -31,6 +31,10 @@ async function renderIn(language: string, ctx: AddonContext, node: ReactNode): P
 }
 
 describe('AccountSelector i18n (English)', () => {
+  afterEach(async () => {
+    await i18n.changeLanguage('en');
+  });
+
   it('renders the English empty-selection label', async () => {
     const ctx = {
       api: { accounts: { getAll: () => Promise.resolve([]) } },
@@ -45,5 +49,10 @@ describe('AccountSelector i18n (English)', () => {
     } as unknown as AddonContext;
     const text = await renderIn('es', ctx, <AccountSelector ctx={ctx} />);
     expect(text).toContain('Selecciona una cuenta');
+  });
+
+  it('interpolates values into a Spanish string', async () => {
+    await i18n.changeLanguage('es');
+    expect(i18n.t('planner.sumError', { total: '42.00' })).toContain('42.00');
   });
 });
