@@ -19,6 +19,7 @@ import {
   HoldingPlanner,
 } from '../components';
 import { HoldingCardSkeleton } from '../components/transfer-card';
+import { useHostLanguage } from '../hooks';
 import { useSuspenseHoldings } from '../hooks/use-holdings';
 import {
   TOLERANCE_MAX,
@@ -255,6 +256,7 @@ function RebalancerContent({ ctx, accountId }: RebalancerContentProps) {
 }
 
 export function Rebalancer({ ctx }: { ctx: AddonContext }) {
+  useHostLanguage(ctx);
   const { selectedAccount } = useSelectedAccount();
 
   return (

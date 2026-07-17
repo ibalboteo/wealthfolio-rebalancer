@@ -61,6 +61,13 @@
         "navigate"
       ],
       "purpose": "Navigate to activities page for transaction management"
+    },
+    {
+      "category": "settings",
+      "functions": [
+        "get"
+      ],
+      "purpose": "Read the host UI language to localize the addon"
     }
   ],
   "keywords": [
