@@ -47,6 +47,11 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "@types/react-dom"
         update-types: ["version-update:semver-major"]
+      # @types/node alineado con el Node del CI (node-version: '24').
+      # Subir el major aqui sin subir el runtime describe APIs inexistentes
+      # en ejecucion; se actualiza a mano al subir el Node de CI.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
 
   # Actualizaciones de las GitHub Actions usadas en los workflows
   - package-ecosystem: "github-actions"
