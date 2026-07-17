@@ -1,0 +1,62 @@
+---
+version: 2
+updates:
+  # Dependencias de npm/pnpm
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Madrid"
+    open-pull-requests-limit: 10
+    versioning-strategy: increase
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    groups:
+      # Los paquetes de Wealthfolio deben moverse juntos y en sync con el host
+      wealthfolio:
+        patterns:
+          - "@wealthfolio/*"
+      # Agrupa parches y minors en un solo PR para reducir ruido
+      minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+    # Dependencias compartidas en runtime con el host Wealthfolio.
+    # El addon corre dentro del mismo arbol de React del host y comparte
+    # contextos (React, QueryClient, instancia i18n). Un major desincronizado
+    # respecto al host rompe en ejecucion, asi que ignoramos los majors hasta
+    # que Wealthfolio actualice primero. Los minor/patch siguen permitidos.
+    ignore:
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@tanstack/react-query"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "i18next"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-i18next"
+        update-types: ["version-update:semver-major"]
+      # Tipos de React alineados con el runtime de React
+      - dependency-name: "@types/react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/react-dom"
+        update-types: ["version-update:semver-major"]
+
+  # Actualizaciones de las GitHub Actions usadas en los workflows
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Madrid"
+    labels:
+      - "ci"
+    commit-message:
+      prefix: "ci"
